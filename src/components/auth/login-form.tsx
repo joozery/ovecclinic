@@ -22,24 +22,21 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
-const formSchema = z.object({
-    email: z.string().email("กรุณากรอกอีเมลที่ถูกต้อง"),
-    password: z.string().min(6, "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร"),
-});
+import { loginSchema } from "@/lib/zod";
 
 export function LoginForm() {
     const [isPending, startTransition] = useTransition();
     const [showPassword, setShowPassword] = useState(false);
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<z.infer<typeof loginSchema>>({
+        resolver: zodResolver(loginSchema),
         defaultValues: {
             email: "",
             password: "",
         },
     });
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    function onSubmit(values: z.infer<typeof loginSchema>) {
         startTransition(async () => {
             await signIn("credentials", {
                 email: values.email,

@@ -20,24 +20,17 @@ import { User, Mail, Lock, UserPlus, Eye, EyeOff, ArrowLeft } from "lucide-react
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
-const formSchema = z.object({
-    name: z.string().min(2, "กรุณากรอกชื่อ-นามสกุลจริง"),
-    email: z.string().email("กรุณากรอกอีเมลที่ถูกต้อง"),
-    password: z.string().min(6, "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร"),
-    confirmPassword: z.string().min(6, "กรุณายืนยันรหัสผ่าน"),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "รหัสผ่านไม่ตรงกัน",
-    path: ["confirmPassword"],
-});
+import { signIn } from "next-auth/react";
+import { register } from "@/actions/register";
+import { registerSchema } from "@/lib/zod";
 
 export function RegisterForm() {
     const [isPending, startTransition] = useTransition();
     const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<z.infer<typeof registerSchema>>({
+        resolver: zodResolver(registerSchema),
         defaultValues: {
             name: "",
             email: "",
@@ -46,15 +39,31 @@ export function RegisterForm() {
         },
     });
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    function onSubmit(values: z.infer<typeof registerSchema>) {
         startTransition(async () => {
-            try {
-                // Here you would typically call your API route for registration
-                // const res = await fetch("/api/register", { ... });
-                toast.success("ลงทะเบียนสำเร็จ กรุณาเข้าสู่ระบบ");
-                router.push("/login");
-            } catch (error) {
-                toast.error("เกิดข้อผิดพลาดในการลงทะเบียน");
+            const result = await register(values);
+
+            if (result.error) {
+                toast.error(result.error);
+                return;
+            }
+
+            if (result.success) {
+                toast.success("ลงทะเบียนสำเร็จ กำลังเข้าสู่ระบบ...");
+
+                // Auto-login
+                const loginResult = await signIn("credentials", {
+                    email: values.email,
+                    password: values.password,
+                    redirect: false,
+                });
+
+                if (loginResult?.error) {
+                    toast.error("ลงทะเบียนสำเร็จแล้ว กรุณาเข้าสู่ระบบด้วยตนเอง");
+                    router.push("/login");
+                } else {
+                    window.location.href = "/onboarding";
+                }
             }
         });
     }

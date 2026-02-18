@@ -70,10 +70,26 @@ export default async function ActivitiesPage({
                                             activity.status === 'Full' ? 'เต็มแล้ว' : 'ปิดรับสมัคร'}
                                     </Badge>
                                     {activity.quota && (
-                                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-lg">
-                                            <Users className="w-3.5 h-3.5" />
-                                            {activity.quota} ที่นั่ง
-                                        </span>
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-lg">
+                                                <Users className="w-3.5 h-3.5" />
+                                                <span className={cn(
+                                                    activity.currentRegistrations >= activity.quota ? "text-red-500" : "text-slate-700"
+                                                )}>
+                                                    {activity.currentRegistrations || 0}
+                                                </span>
+                                                <span className="text-slate-400">/ {activity.quota} ที่นั่ง</span>
+                                            </span>
+                                            {/* Progress Bar */}
+                                            <div className="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                <div
+                                                    className={cn("h-full rounded-full transition-all duration-500",
+                                                        activity.currentRegistrations >= activity.quota ? "bg-red-500" : "bg-blue-500"
+                                                    )}
+                                                    style={{ width: `${Math.min(((activity.currentRegistrations || 0) / activity.quota) * 100, 100)}%` }}
+                                                />
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                                 <CardTitle className="line-clamp-2 text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
@@ -99,7 +115,19 @@ export default async function ActivitiesPage({
                                         <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 shrink-0">
                                             <MapPin className="w-4 h-4" />
                                         </div>
-                                        <span className="line-clamp-2 pt-1.5">{activity.location}</span>
+                                        {/* Auto-link location if it starts with http */}
+                                        {activity.location.startsWith('http') ? (
+                                            <a
+                                                href={activity.location}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="line-clamp-2 pt-1.5 text-blue-600 hover:underline font-medium break-all"
+                                            >
+                                                ลิงก์สถานที่ประชุม/ออนไลน์
+                                            </a>
+                                        ) : (
+                                            <span className="line-clamp-2 pt-1.5">{activity.location}</span>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="h-px bg-slate-100 w-full" />
