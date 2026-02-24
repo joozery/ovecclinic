@@ -36,12 +36,14 @@ export function SearchInput({ placeholder = "Search...", defaultValue, className
     );
 
     return (
-        <div className={cn("relative", className)}>
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className={cn("relative group", className)}>
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none transition-transform group-focus-within:scale-110">
+                <Search className="h-4 w-4 text-slate-400 group-focus-within:text-[#1a237e] transition-colors" />
+            </div>
             <Input
                 type="search"
                 placeholder={placeholder}
-                className="pl-8 w-full"
+                className="pl-11 pr-4 w-full h-full border-none bg-slate-100 focus-visible:ring-2 focus-visible:ring-blue-100 transition-all text-slate-900 font-bold"
                 defaultValue={defaultValue || searchParams.get("q") || ""}
                 onChange={(e) => {
                     startTransition(() => {

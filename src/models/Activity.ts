@@ -8,6 +8,15 @@ const ActivitySchema = new mongoose.Schema({
     endTime: { type: Date, required: true },
     quota: { type: Number, required: true, min: 1 },
     location: { type: String, required: true }, // Can be a URL or physical address
+    meetingId: { type: String }, // For virtual meetings (Zoom/Teams)
+    meetingPassword: { type: String }, // For virtual meetings
+    bannerImage: { type: String }, // URL from Cloudinary/R2
+    documents: [{
+        name: { type: String, required: true },
+        url: { type: String, required: true },
+        type: { type: String },
+        size: { type: Number },
+    }],
     status: {
         type: String,
         enum: ['Open', 'Full', 'Closed', 'Postponed'],

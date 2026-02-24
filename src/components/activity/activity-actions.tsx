@@ -10,13 +10,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import {
     AlertDialog,
     AlertDialogAction,
     AlertDialogCancel,
@@ -27,11 +20,10 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { MoreHorizontal, Edit, Trash } from "lucide-react";
-import { ActivityForm } from "./activity-form";
 import { deleteActivity } from "@/actions/activity";
+import Link from "next/link";
 
 export function ActivityActions({ activity }: { activity: any }) {
-    const [showEditDialog, setShowEditDialog] = useState(false);
     const [showDeleteAlert, setShowDeleteAlert] = useState(false);
 
     const handleDelete = async () => {
@@ -53,42 +45,28 @@ export function ActivityActions({ activity }: { activity: any }) {
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
-                        <Edit className="mr-2 h-4 w-4" /> Edit
+                    <DropdownMenuItem asChild>
+                        <Link href={`/activities/manage/${activity._id}/edit`} className="flex items-center">
+                            <Edit className="mr-2 h-4 w-4" /> แก้ไข
+                        </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowDeleteAlert(true)} className="text-red-600">
-                        <Trash className="mr-2 h-4 w-4" /> Delete
+                        <Trash className="mr-2 h-4 w-4" /> ลบ
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-                <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                        <DialogTitle>Edit Activity</DialogTitle>
-                        <DialogDescription>
-                            Make changes to the activity here. Click save when you're done.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <ActivityForm
-                        initialData={activity}
-                        activityId={activity._id}
-                        onSuccess={() => setShowEditDialog(false)}
-                    />
-                </DialogContent>
-            </Dialog>
-
             <AlertDialog open={showDeleteAlert} onOpenChange={setShowDeleteAlert}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogTitle>ยืนยันการลบกิจกรรม?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the activity.
+                            การดำเนินการนี้ไม่สามารถย้อนกลับได้ กิจกรรมนี้จะถูกลบออกจากระบบอย่างถาวร
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">Delete</AlertDialogAction>
+                        <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">ลบทิ้ง</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

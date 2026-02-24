@@ -40,7 +40,11 @@ export default async function PublicActivitiesPage({
                                     {activity.status}
                                 </Badge>
                             </div>
-                            <CardTitle className="line-clamp-2 leading-snug">{activity.title}</CardTitle>
+                            <CardTitle className="line-clamp-2 leading-snug hover:text-blue-600 transition-colors">
+                                <Link href={`/activities/${activity._id}`}>
+                                    {activity.title}
+                                </Link>
+                            </CardTitle>
                             <CardDescription className="line-clamp-3 mt-2">{activity.description}</CardDescription>
                         </CardHeader>
                         <CardContent className="flex-1 space-y-3">
@@ -57,10 +61,15 @@ export default async function PublicActivitiesPage({
                                 Online / Bangkok Region
                             </div>
                         </CardContent>
-                        <CardFooter className="pt-6 border-t">
-                            <Button className="w-full bg-blue-600 hover:bg-blue-700" asChild>
-                                <Link href={`/login?callbackUrl=/activities`}>
-                                    Sign in to Register <ArrowRight className="ml-2 h-4 w-4" />
+                        <CardFooter className="pt-6 border-t gap-3">
+                            <Button variant="outline" className="flex-1" asChild>
+                                <Link href={`/activities/${activity._id}`}>
+                                    ดูรายละเอียด
+                                </Link>
+                            </Button>
+                            <Button className="flex-1 bg-blue-600 hover:bg-blue-700" asChild>
+                                <Link href={`/login?callbackUrl=/activities/${activity._id}`}>
+                                    ลงทะเบียน <ArrowRight className="ml-2 h-4 w-4" />
                                 </Link>
                             </Button>
                         </CardFooter>

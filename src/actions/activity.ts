@@ -18,6 +18,11 @@ export async function createActivity(formData: FormData) {
     const endTime = formData.get("endTime");
     const quota = Number(formData.get("quota"));
     const location = formData.get("location");
+    const meetingId = formData.get("meetingId");
+    const meetingPassword = formData.get("meetingPassword");
+    const bannerImage = formData.get("bannerImage");
+    const documentsRaw = formData.get("documents");
+    const documents = documentsRaw ? JSON.parse(documentsRaw as string) : [];
 
     if (!title || !description || !startTime || !endTime || !quota || !location) {
         throw new Error("All fields are required");
@@ -32,6 +37,10 @@ export async function createActivity(formData: FormData) {
         endTime: new Date(endTime as string),
         quota,
         location,
+        meetingId,
+        meetingPassword,
+        bannerImage,
+        documents,
         createdBy: session.user.id,
     });
 
@@ -113,6 +122,11 @@ export async function updateActivity(id: string, formData: FormData) {
     const endTime = formData.get("endTime");
     const quota = Number(formData.get("quota"));
     const location = formData.get("location");
+    const meetingId = formData.get("meetingId");
+    const meetingPassword = formData.get("meetingPassword");
+    const bannerImage = formData.get("bannerImage");
+    const documentsRaw = formData.get("documents");
+    const documents = documentsRaw ? JSON.parse(documentsRaw as string) : [];
 
     if (!title || !description || !startTime || !endTime || !quota || !location) {
         throw new Error("All fields are required");
@@ -127,6 +141,10 @@ export async function updateActivity(id: string, formData: FormData) {
         endTime: new Date(endTime as string),
         quota,
         location,
+        meetingId,
+        meetingPassword,
+        bannerImage,
+        documents,
     });
 
     revalidatePath("/dashboard/activities");

@@ -1,18 +1,10 @@
-
-import { ActivityForm } from "@/components/activity/activity-form";
 import { getActivities } from "@/actions/activity";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Plus, Calendar } from "lucide-react";
 import { format } from "date-fns";
+import { th } from "date-fns/locale";
+import Link from "next/link";
 import { auth } from "@/auth"; // Use auth to protect route
 import { redirect } from "next/navigation";
 import { ActivityActions } from "@/components/activity/activity-actions";
@@ -30,49 +22,47 @@ export default async function ManageActivitiesPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center bg-white/50 backdrop-blur-sm p-6 rounded-3xl border border-slate-100 shadow-sm">
                 <div className="space-y-1">
-                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">จัดการกิจกรรมการอบรม</h1>
-                    <p className="text-sm text-slate-500">สร้างและจัดการหลักสูตรการพัฒนาบุคลากร</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900">จัดการกิจกรรมการนิเทศ</h1>
+                    <p className="text-sm text-slate-500">สร้างและจัดการหลักสูตรการนิเทศ</p>
                 </div>
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95">
-                            <Plus className="w-4 h-4" /> สร้างกิจกรรมใหม่
-                        </button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-[600px] rounded-3xl">
-                        <DialogHeader>
-                            <DialogTitle className="text-xl font-bold">สร้างกิจกรรมใหม่</DialogTitle>
-                            <DialogDescription>
-                                กรอกข้อมูลรายละเอียดสำหรับกิจกรรมการอบรมหรือเวิร์กช็อปใหม่
-                            </DialogDescription>
-                        </DialogHeader>
-                        <ActivityForm />
-                    </DialogContent>
-                </Dialog>
+                <Link href="/activities/manage/create">
+                    <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95">
+                        <Plus className="w-4 h-4" /> สร้างกิจกรรมใหม่
+                    </button>
+                </Link>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {activities.map((activity: any) => (
-                    <Card key={activity._id}>
+                    <Card key={activity._id} className="rounded-2xl border-slate-100 shadow-sm overflow-hidden flex flex-col">
                         <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
                             <div className="space-y-1">
-                                <CardTitle className="text-xl">{activity.title}</CardTitle>
-                                <CardDescription>{activity.location}</CardDescription>
+                                <CardTitle className="text-xl line-clamp-1">{activity.title}</CardTitle>
+                                <CardDescription className="flex items-center gap-1.5">
+                                    <Calendar className="w-3.5 h-3.5" />
+                                    {format(new Date(activity.startTime), "d MMM yyyy", { locale: th })}
+                                </CardDescription>
                             </div>
                             <ActivityActions activity={activity} />
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="flex-1">
                             <p className="text-sm text-gray-500 mb-4 line-clamp-2 mt-2">
                                 {activity.description}
                             </p>
-                            <div className="flex flex-col gap-1 text-sm bg-gray-50 p-3 rounded-md">
+                            <div className="flex flex-col gap-1 text-[11px] bg-slate-50 p-3 rounded-xl border border-slate-100">
                                 <div className="flex justify-between">
-                                    <span className="font-medium text-gray-600">Start:</span>
-                                    <span>{format(new Date(activity.startTime), "MMM d, HH:mm")}</span>
+                                    <span className="font-medium text-gray-600">เริ่ม:</span>
+                                    <span>
+                                        {format(new Date(activity.startTime), "d MMM ", { locale: th })}
+                                        {(new Date(activity.startTime).getFullYear() + 543).toString().slice(-2)}, {format(new Date(activity.startTime), "HH:mm")}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="font-medium text-gray-600">End:</span>
-                                    <span>{format(new Date(activity.endTime), "MMM d, HH:mm")}</span>
+                                    <span className="font-medium text-gray-600">สิ้นสุด:</span>
+                                    <span>
+                                        {format(new Date(activity.endTime), "d MMM ", { locale: th })}
+                                        {(new Date(activity.endTime).getFullYear() + 543).toString().slice(-2)}, {format(new Date(activity.endTime), "HH:mm")}
+                                    </span>
                                 </div>
                                 <div className="flex justify-between mt-1">
                                     <span className="font-medium text-gray-600">Quota:</span>
@@ -96,8 +86,8 @@ export default async function ManageActivitiesPage() {
                         <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 text-slate-300">
                             <Calendar className="w-8 h-8" />
                         </div>
-                        <p className="text-lg font-bold text-slate-900 mb-1">ยังไม่มีกิจกรรมการอบรม</p>
-                        <p className="text-sm font-medium">เริ่มต้นโดยการสร้างกิจกรรมการพัฒนาบุคลากรเป็นครั้งแรกของคุณ</p>
+                        <p className="text-lg font-bold text-slate-900 mb-1">ยังไม่มีกิจกรรมการนิเทศ</p>
+                        <p className="text-sm font-medium">เริ่มต้นโดยการสร้างกิจกรรมการนิเทศเป็นครั้งแรกของคุณ</p>
                     </div>
                 )}
             </div>

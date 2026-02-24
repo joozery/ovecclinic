@@ -28,6 +28,7 @@ const UserSchema = new mongoose.Schema({
             type: String,
             enum: ['Government', 'Private'],
         },
+        academicStanding: String,
     },
     isProfileComplete: { type: Boolean, default: false },
 }, { timestamps: true });

@@ -38,7 +38,7 @@ export function Sidebar() {
             active: pathname === "/dashboard",
         },
         {
-            label: "กิจกรรมการอบรม",
+            label: "กิจกรรมการนิเทศ",
             icon: Activity,
             href: "/activities",
             active: pathname === "/activities",

@@ -28,29 +28,33 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Phone, School, UserCircle, MapPinned, Building2, Loader2 } from "lucide-react";
+import { Phone, School, UserCircle, MapPinned, Building2, Loader2, GraduationCap } from "lucide-react";
 
 const formSchema = z.object({
+    name: z.string().min(2, "กรุณากรอกชื่อ-นามสกุลจริง"),
     phone: z.string().min(10, "กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง"),
     college: z.string().min(2, "กรุณากรอกชื่อสถานศึกษา"),
-    position: z.string().min(2, "กรุณากรอกตำแหน่ง"),
+    position: z.string().min(1, "กรุณาเลือกตำแหน่ง"),
     region: z.string().min(1, "กรุณาเลือกภาค"),
     affiliation: z.enum(['Government', 'Private']),
+    academicStanding: z.string().min(1, "กรุณาเลือกวิทยฐานะ"),
 });
 
 export function OnboardingForm() {
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
-    const { update } = useSession();
+    const { data: session, update } = useSession();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            name: session?.user?.name || "",
             phone: "",
             college: "",
             position: "",
             region: "Central",
             affiliation: "Government",
+            academicStanding: "ไม่มี",
         },
     });
 
@@ -66,8 +70,11 @@ export function OnboardingForm() {
 
                 if (result.success) {
                     await update({
-                        isProfileComplete: true,
-                        // Pass other fields if they are missing in the current session
+                        user: {
+                            ...session?.user,
+                            name: values.name,
+                            isProfileComplete: true,
+                        }
                     });
 
                     toast.success("บันทึกข้อมูลสำเร็จ กำลังพาคุณไปที่หน้า Dashboard...");
@@ -101,6 +108,22 @@ export function OnboardingForm() {
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
                         <div className="grid grid-cols-1 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-1.5">
+                                        <FormLabel className="text-slate-400 font-medium text-[11px] ml-1 flex items-center gap-2">
+                                            <UserCircle className="w-3.5 h-3.5" /> ชื่อ - นามสกุล
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="กรอกชื่อ-นามสกุลจริง" {...field} className="h-12 px-4 rounded-xl border-none bg-[#f1f5fa] focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold text-base shadow-inner" />
+                                        </FormControl>
+                                        <FormMessage className="text-[10px] font-bold" />
+                                    </FormItem>
+                                )}
+                            />
+
                             <FormField
                                 control={form.control}
                                 name="phone"
@@ -141,9 +164,50 @@ export function OnboardingForm() {
                                         <FormLabel className="text-slate-400 font-medium text-[11px] ml-1 flex items-center gap-2">
                                             <UserCircle className="w-3.5 h-3.5" /> ตำแหน่ง
                                         </FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="เช่น ครูชำนาญการ" {...field} className="h-12 px-4 rounded-xl border-none bg-[#f1f5fa] focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold text-base shadow-inner" />
-                                        </FormControl>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger className="h-12 px-4 rounded-xl border-none bg-[#f1f5fa] focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold text-base shadow-inner">
+                                                    <SelectValue placeholder="เลือกตำแหน่ง" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                                                <SelectItem value="ครูอัตราจ้าง" className="font-bold py-3 px-4">ครูอัตราจ้าง</SelectItem>
+                                                <SelectItem value="พนักงานราชการ" className="font-bold py-3 px-4">พนักงานราชการ</SelectItem>
+                                                <SelectItem value="ครูผู้ช่วย" className="font-bold py-3 px-4">ครูผู้ช่วย</SelectItem>
+                                                <SelectItem value="ครู" className="font-bold py-3 px-4">ครู</SelectItem>
+                                                <SelectItem value="รองผู้อำนวยการ" className="font-bold py-3 px-4">รองผู้อำนวยการ</SelectItem>
+                                                <SelectItem value="ผู้อำนวยการ" className="font-bold py-3 px-4">ผู้อำนวยการ</SelectItem>
+                                                <SelectItem value="ศึกษานิเทศก์" className="font-bold py-3 px-4">ศึกษานิเทศก์</SelectItem>
+                                                <SelectItem value="อื่นๆ" className="font-bold py-3 px-4">อื่นๆ</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage className="text-[10px] font-bold" />
+                                    </FormItem>
+                                )}
+                            />
+
+                            <FormField
+                                control={form.control}
+                                name="academicStanding"
+                                render={({ field }) => (
+                                    <FormItem className="space-y-1.5">
+                                        <FormLabel className="text-slate-400 font-medium text-[11px] ml-1 flex items-center gap-2">
+                                            <GraduationCap className="w-3.5 h-3.5" /> วิทยฐานะ
+                                        </FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger className="h-12 px-4 rounded-xl border-none bg-[#f1f5fa] focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold text-base shadow-inner">
+                                                    <SelectValue placeholder="เลือกวิทยฐานะ" />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                                                <SelectItem value="ไม่มี" className="font-bold py-3 px-4">ไม่มี</SelectItem>
+                                                <SelectItem value="ชำนาญการ" className="font-bold py-3 px-4">ชำนาญการ</SelectItem>
+                                                <SelectItem value="ชำนาญการพิเศษ" className="font-bold py-3 px-4">ชำนาญการพิเศษ</SelectItem>
+                                                <SelectItem value="เชี่ยวชาญ" className="font-bold py-3 px-4">เชี่ยวชาญ</SelectItem>
+                                                <SelectItem value="เชี่ยวชาญพิเศษ" className="font-bold py-3 px-4">เชี่ยวชาญพิเศษ</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                         <FormMessage className="text-[10px] font-bold" />
                                     </FormItem>
                                 )}
@@ -165,11 +229,11 @@ export function OnboardingForm() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                                                    <SelectItem value="North" className="font-bold py-3 px-4">ภาคเหนือ</SelectItem>
-                                                    <SelectItem value="Central" className="font-bold py-3 px-4">ภาคกลาง</SelectItem>
-                                                    <SelectItem value="Northeast" className="font-bold py-3 px-4">ภาคอีสาน</SelectItem>
-                                                    <SelectItem value="South" className="font-bold py-3 px-4">ภาคใต้</SelectItem>
-                                                    <SelectItem value="East_Bangkok" className="font-bold py-3 px-4">กรุงเทพฯ และปริมณฑล</SelectItem>
+                                                    <SelectItem value="North" className="font-bold py-3 px-4">เหนือ</SelectItem>
+                                                    <SelectItem value="South" className="font-bold py-3 px-4">ใต้</SelectItem>
+                                                    <SelectItem value="Central" className="font-bold py-3 px-4">กลาง</SelectItem>
+                                                    <SelectItem value="Northeast" className="font-bold py-3 px-4">ตะวันออกเฉียงเหนือ</SelectItem>
+                                                    <SelectItem value="East_Bangkok" className="font-bold py-3 px-4">ตะวันออกและกรุงเทพมหานคร</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage className="text-[10px] font-bold" />

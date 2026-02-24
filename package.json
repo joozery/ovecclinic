@@ -9,11 +9,15 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.996.0",
+    "@aws-sdk/lib-storage": "^3.996.0",
+    "@aws-sdk/s3-request-presigner": "^3.996.0",
     "@hookform/resolvers": "^5.2.2",
     "@react-pdf/renderer": "^4.3.2",
     "@types/bcryptjs": "^2.4.6",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.570.0",

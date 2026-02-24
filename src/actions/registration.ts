@@ -110,3 +110,24 @@ export async function cancelRegistration(registrationId: string) {
     revalidatePath("/my-activities");
     return { success: true };
 }
+
+export async function cancelRegistrationByActivityId(activityId: string) {
+    const session = await auth();
+    if (!session || !session.user) {
+        throw new Error("Unauthorized");
+    }
+
+    await dbConnect();
+
+    const registration = await Registration.findOne({
+        userId: session.user.id,
+        activityId,
+        status: 'Registered',
+    });
+
+    if (!registration) {
+        throw new Error("Registration not found");
+    }
+
+    return cancelRegistration(registration._id.toString());
+}

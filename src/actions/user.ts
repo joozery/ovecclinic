@@ -12,23 +12,27 @@ export async function updateProfile(formData: FormData) {
         throw new Error("Not authenticated");
     }
 
+    const name = formData.get("name") as string;
     const phone = formData.get("phone") as string;
     const college = formData.get("college") as string;
     const position = formData.get("position") as string;
     const region = formData.get("region") as string;
     const affiliation = formData.get("affiliation") as string;
+    const academicStanding = formData.get("academicStanding") as string;
 
     await dbConnect();
 
     await User.findByIdAndUpdate(
         session.user.id,
         {
+            name,
             profile: {
                 phone,
                 college,
                 position,
                 region,
                 affiliation,
+                academicStanding,
             },
             isProfileComplete: true,
         }

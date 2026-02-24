@@ -1,7 +1,8 @@
 
 "use server";
 
-import cloudinary from "@/lib/cloudinary";
+import r2Client from "@/lib/r2";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 export async function uploadFile(formData: FormData) {
     const file = formData.get("file") as File;
@@ -10,30 +11,30 @@ export async function uploadFile(formData: FormData) {
         throw new Error("No file provided");
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const fileName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+    const contentType = file.type || "application/octet-stream";
 
-    return new Promise<{ secure_url: string; public_id: string }>((resolve, reject) => {
-        cloudinary.uploader.upload_stream(
-            {
-                folder: "ovec-platform",
-                resource_type: "auto", // Automatically detect image/pdf/video
-            },
-            (error, result) => {
-                if (error) {
-                    console.error("Cloudinary Upload Error:", error);
-                    reject(error);
-                    return;
-                }
-                if (!result) {
-                    reject(new Error("Upload failed"));
-                    return;
-                }
-                resolve({
-                    secure_url: result.secure_url,
-                    public_id: result.public_id,
-                });
-            }
-        ).end(buffer);
-    });
+    const bucketName = process.env.R2_BUCKET_NAME || "";
+    const publicUrl = process.env.R2_PUBLIC_URL || "";
+
+    try {
+        await r2Client.send(
+            new PutObjectCommand({
+                Bucket: bucketName,
+                Key: fileName,
+                Body: buffer,
+                ContentType: contentType,
+            })
+        );
+
+        // Return the public URL
+        return {
+            secure_url: `${publicUrl}/${fileName}`,
+            public_id: fileName,
+        };
+    } catch (error) {
+        console.error("R2 Upload Error:", error);
+        throw new Error("Failed to upload file to R2");
+    }
 }
