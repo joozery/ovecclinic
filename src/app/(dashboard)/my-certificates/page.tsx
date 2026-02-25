@@ -11,15 +11,26 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
 
-export default async function MyCertificatesPage() {
+import { CertificateSearch } from "./search-form";
+
+export default async function MyCertificatesPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+    const { q } = await searchParams;
     const session = await auth();
 
     if (!session) {
         redirect("/login");
     }
 
-    const certificates = await getMyCertificates();
+    const allCertificates = await getMyCertificates();
     const template = await getCertificateTemplate();
+
+    // Filter certificates by query
+    const query = q?.toLowerCase() || "";
+    const certificates = allCertificates.filter((cert: any) => {
+        const code = cert.certificateCode?.toLowerCase() || "";
+        const title = cert.activityId?.title?.toLowerCase() || "";
+        return code.includes(query) || title.includes(query);
+    });
 
     return (
         <div className="space-y-10 pb-20">
@@ -29,7 +40,7 @@ export default async function MyCertificatesPage() {
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-400/10 rounded-full -ml-24 -mb-24 blur-3xl" />
 
                 <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="space-y-2">
+                    <div className="space-y-2 w-full">
                         <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-blue-400/20 border border-blue-400/30 text-blue-100 text-[9px] font-bold uppercase tracking-widest">
                             <Award className="w-3 h-3" /> Achievement Gallery
                         </div>
@@ -39,8 +50,9 @@ export default async function MyCertificatesPage() {
                         <p className="text-blue-100/70 max-w-sm font-medium text-sm leading-relaxed">
                             ความสำเร็จของคุณคือความภูมิใจของเรา รวบรวมและจัดการเกียรติบัตรทั้งหมดที่นี่
                         </p>
+                        <CertificateSearch />
                     </div>
-                    <div className="hidden lg:flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl transition-transform duration-500 hover:scale-105">
+                    <div className="hidden lg:flex items-center justify-center w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl transition-transform duration-500 hover:scale-105 shrink-0">
                         <Award className="w-10 h-10 text-white opacity-80" />
                     </div>
                 </div>
