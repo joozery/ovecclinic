@@ -85,3 +85,69 @@ http://nitedx.vec.go.th`,
         throw error;
     }
 }
+
+export async function sendWelcomeEmail({
+    to,
+    userName,
+    organizationName = "สำนักงานคณะกรรมการการอาชีวศึกษา (OVEC)",
+}: {
+    to: string;
+    userName: string;
+    organizationName?: string;
+}) {
+    const mailOptions = {
+        from: `"${organizationName}" <${process.env.SMTP_FROM}>`,
+        to,
+        subject: `ยินดีต้อนรับเข้าใช้งานระบบ ${organizationName}`,
+        text: `เรียน คุณ ${userName},
+
+ยินดีต้อนรับท่านเข้าใช้งานระบบนิเทศออนไลน์และบริหารจัดการเกียรติบัตรอิเล็กทรอนิกส์
+
+ขณะนี้ท่านได้สมัครสมาชิกเรียบร้อยแล้ว ท่านสามารถเข้าสู่ระบบเพื่อลงทะเบียนเข้ารับการนิเทศ และตรวจสอบเกียรติบัตรของท่านได้ที่เว็บบไซต์ของเรา
+
+ขอแสดงความนับถือ,
+ทีมงานผู้ดูแลระบบ
+สำนักงานคณะกรรมการการอาชีวศึกษา
+http://nitedx.vec.go.th`,
+        html: `
+            <div style="font-family: 'Sarabun', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; padding: 20px; border-radius: 10px; background-color: #fff;">
+                <div style="text-align: center; padding-bottom: 20px;">
+                     <h1 style="color: #1a237e; margin: 0;">ยินดีต้อนรับสู่ระบบนิเทศออนไลน์</h1>
+                     <p style="color: #666; font-size: 14px;">สำนักงานคณะกรรมการการอาชีวศึกษา (OVEC)</p>
+                </div>
+                
+                <p>เรียน คุณ <strong>${userName}</strong>,</p>
+                <p>ยินดีต้อนรับท่านเข้าสู่ระบบนิเทศออนไลน์และบริหารจัดการเกียรติบัตรอิเล็กทรอนิกส์อย่างเป็นทางการ</p>
+                
+                <p>ขณะนี้บัญชีผู้ใช้งานของท่านพร้อมสำหรับเข้าใช้งานแล้ว ท่านสามารถดำเนินการดังนี้:</p>
+                <ul style="color: #555;">
+                    <li>เลือกหัวข้อและลงทะเบียนเข้ารับการนิเทศที่สนใจ</li>
+                    <li>ส่งผลงานและหลักฐานการเรียนรู้</li>
+                    <li>ตรวจสอบและดาวน์โหลดเกียรติบัตรที่ได้รับการอนุมัติ</li>
+                </ul>
+
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="http://nitedx.vec.go.th" style="background-color: #1a237e; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">เข้าสู่เว็บไซต์</a>
+                </div>
+                
+                <p>หากมีข้อสงสัยประการใด สามารถติดต่อสอบถามได้ที่หน่วยงานต้นสังกัดของท่าน</p>
+                
+                <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; font-size: 13px; color: #777;">
+                    <p style="margin: 5px 0;">ขอแสดงความนับถือ,</p>
+                    <p style="margin: 5px 0; font-weight: bold; color: #333;">ทีมงานผู้ดูแลระบบ</p>
+                    <p style="margin: 5px 0;">สำนักงานคณะกรรมการการอาชีวศึกษา</p>
+                    <p style="margin: 5px 0;"><a href="http://nitedx.vec.go.th" style="color: #1a237e;">http://nitedx.vec.go.th</a></p>
+                </div>
+            </div>
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return { success: true };
+    } catch (error) {
+        console.error("Error sending welcome email:", error);
+        throw error;
+    }
+}
+

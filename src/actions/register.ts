@@ -29,6 +29,17 @@ export async function register(values: any) {
             role: "teacher", // Default role
         });
 
+        // Send Welcome Email
+        try {
+            const { sendWelcomeEmail } = await import("@/lib/mail");
+            await sendWelcomeEmail({
+                to: email,
+                userName: name,
+            });
+        } catch (emailError) {
+            console.error("Failed to send welcome email during registration:", emailError);
+        }
+
         return { success: "ลงทะเบียนสำเร็จ กรุณาเข้าสู่ระบบ" };
     } catch (error) {
         console.error("Registration error:", error);

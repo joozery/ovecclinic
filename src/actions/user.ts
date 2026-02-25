@@ -22,6 +22,10 @@ export async function updateProfile(formData: FormData) {
 
     await dbConnect();
 
+    // Find the user first to check if profile was already complete
+    const user = await User.findById(session.user.id);
+    const wasAlreadyComplete = user?.isProfileComplete;
+
     await User.findByIdAndUpdate(
         session.user.id,
         {
@@ -37,6 +41,19 @@ export async function updateProfile(formData: FormData) {
             isProfileComplete: true,
         }
     );
+
+    // If this is the first time they complete their profile (Welcome them!)
+    if (!wasAlreadyComplete && user?.email) {
+        try {
+            const { sendWelcomeEmail } = await import("@/lib/mail");
+            await sendWelcomeEmail({
+                to: user.email,
+                userName: name || user.name || "สมาชิกใหม่",
+            });
+        } catch (emailError) {
+            console.error("Failed to send welcome email during onboarding:", emailError);
+        }
+    }
 
     revalidatePath("/");
     return { success: true };
