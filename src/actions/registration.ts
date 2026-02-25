@@ -7,6 +7,10 @@ import dbConnect from "@/lib/db";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 
+import { sendNotificationEmail } from "@/lib/mail";
+import { format } from "date-fns";
+import { th } from "date-fns/locale";
+
 export async function registerForActivity(activityId: string) {
     const session = await auth();
     if (!session || !session.user) {
@@ -15,7 +19,7 @@ export async function registerForActivity(activityId: string) {
 
     await dbConnect();
 
-    const activity = await Activity.findById(activityId);
+    const activity = await Activity.findById(activityId).populate('createdBy');
     if (!activity) {
         throw new Error("Activity not found");
     }
@@ -46,6 +50,26 @@ export async function registerForActivity(activityId: string) {
         activityId,
         status: 'Registered',
     });
+
+    // Send Notification Email
+    try {
+        if (session.user.email) {
+            await sendNotificationEmail({
+                to: session.user.email,
+                teacherName: session.user.name || "คุณครู",
+                activityTitle: activity.title,
+                date: format(new Date(activity.startTime), "d MMMM yyyy", { locale: th }),
+                startTime: format(new Date(activity.startTime), "HH:mm"),
+                endTime: format(new Date(activity.endTime), "HH:mm"),
+                meetingLink: activity.location || "ไม่ได้ระบุลิงก์",
+                supervisorName: activity.createdBy?.name || "ศึกษานิเทศก์",
+                organizationName: "สำนักงานคณะกรรมการการอาชีวศึกษา (OVEC)"
+            });
+        }
+    } catch (emailError) {
+        console.error("Failed to send notification email:", emailError);
+        // We don't throw error here to avoid rolling back registration just because email failed
+    }
 
     // Check if now full, update activity status if needed
     if (currentRegistrations + 1 >= activity.quota) {
