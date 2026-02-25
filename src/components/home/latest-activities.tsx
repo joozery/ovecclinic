@@ -25,7 +25,13 @@ export function LatestActivities() {
     }, []);
 
     return (
-        <section className="py-24 bg-white relative overflow-hidden">
+        <section className="relative py-32 bg-gradient-to-t from-indigo-50/40 via-white to-white overflow-hidden">
+            {/* Decorative Background Accents */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+                <div className="absolute top-1/4 left-0 w-[500px] h-[500px] bg-indigo-100/30 rounded-full blur-[100px] -translate-x-1/2" />
+                <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-50/50 rounded-full blur-[120px] translate-x-1/4 translate-y-1/4" />
+            </div>
+
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
                     <div className="space-y-4">

@@ -26,8 +26,14 @@ export function CalendarSection() {
     }, []);
 
     return (
-        <section className="py-16 bg-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section className="relative py-24 bg-gradient-to-b from-blue-100/40 via-white to-blue-100/20 overflow-hidden">
+            {/* Background Decorative Elements */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-200/40 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3" />
+                <div className="absolute bottom-0 left-0 w-[700px] h-[700px] bg-indigo-100/50 rounded-full blur-[140px] translate-y-1/3 -translate-x-1/4" />
+            </div>
+
+            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid lg:grid-cols-3 gap-8">
                     {/* Calendar Side */}
                     <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/30 p-6 lg:p-8">
