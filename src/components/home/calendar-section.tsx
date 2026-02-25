@@ -26,11 +26,11 @@ export function CalendarSection() {
     }, []);
 
     return (
-        <section className="relative py-24 bg-gradient-to-b from-blue-100/40 via-white to-blue-100/20 overflow-hidden">
+        <section className="relative py-24 bg-gradient-to-br from-blue-200/50 via-blue-100/30 to-indigo-200/40 overflow-hidden">
             {/* Background Decorative Elements */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-200/40 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3" />
-                <div className="absolute bottom-0 left-0 w-[700px] h-[700px] bg-indigo-100/50 rounded-full blur-[140px] translate-y-1/3 -translate-x-1/4" />
+                <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-400/30 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3" />
+                <div className="absolute bottom-0 left-0 w-[900px] h-[900px] bg-indigo-400/40 rounded-full blur-[150px] translate-y-1/3 -translate-x-1/4" />
             </div>
 
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -104,7 +104,7 @@ export function CalendarSection() {
                     </div>
 
                     {/* Events List Side */}
-                    <div className="bg-slate-50/50 rounded-3xl border border-slate-100 p-6 flex flex-col h-full">
+                    <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/30 p-6 flex flex-col h-full">
                         <div className="flex items-center justify-between mb-6 bg-white p-3 rounded-xl shadow-sm border border-slate-100">
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-indigo-50 text-[#1a237e]">
                                 <ChevronLeft className="w-4 h-4" />
