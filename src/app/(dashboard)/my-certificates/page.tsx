@@ -1,5 +1,6 @@
 
 import { getMyCertificates } from "@/actions/certificate";
+import { getCertificateTemplate } from "@/actions/certificate-template";
 import { DownloadButton } from "@/components/certificate/download-button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ export default async function MyCertificatesPage() {
     }
 
     const certificates = await getMyCertificates();
+    const template = await getCertificateTemplate();
 
     return (
         <div className="space-y-10 pb-20">
@@ -78,9 +80,19 @@ export default async function MyCertificatesPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="flex-1 px-8 py-4">
-                                <div className="relative overflow-hidden flex items-center justify-center h-48 bg-[#f8faff] rounded-2xl border border-blue-50 mb-6 group-hover:bg-blue-50/50 transition-colors">
-                                    <Award className="w-24 h-24 text-blue-100 opacity-50 group-hover:scale-110 group-hover:opacity-100 transition-all duration-700" />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="relative overflow-hidden flex items-center justify-center aspect-[1.414/1] bg-[#f8faff] rounded-2xl border border-blue-50 mb-6 group-hover:bg-blue-50/50 transition-colors">
+                                    {template?.backgroundImageUrl ? (
+                                        <img
+                                            src={template.backgroundImageUrl}
+                                            alt="Certificate Preview"
+                                            className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-110 group-hover:opacity-100 transition-all duration-700"
+                                        />
+                                    ) : (
+                                        <Award className="w-24 h-24 text-blue-100 opacity-50 group-hover:scale-110 group-hover:opacity-100 transition-all duration-700" />
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
+                                        <span className="text-white text-[10px] font-bold bg-black/40 px-3 py-1 rounded-full backdrop-blur-md shadow-sm border border-white/20">รูปแบบและภาพพื้นหลังที่กำหนด</span>
+                                    </div>
                                 </div>
                                 <div className="text-[13px] text-center text-slate-500 space-y-1 bg-slate-50 rounded-2xl p-4">
                                     <p className="font-medium opacity-60">สถานที่อบรม</p>
@@ -88,7 +100,7 @@ export default async function MyCertificatesPage() {
                                 </div>
                             </CardContent>
                             <CardFooter className="p-8 pt-4 flex flex-col gap-3">
-                                <DownloadButton data={certData} fileName={fileName} label="ดาวน์โหลดไฟล์เกียรติบัตร" />
+                                <DownloadButton data={certData} template={template} fileName={fileName} label="ดาวน์โหลดไฟล์เกียรติบัตร" />
                                 <Link href={`/verify/${cert.certificateCode}`} className="w-full">
                                     <button className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[11px] font-bold text-slate-400 hover:text-[#1a237e] hover:bg-slate-50 transition-all">
                                         <ExternalLink className="w-3.5 h-3.5" /> ตรวจสอบความถูกต้องออนไลน์

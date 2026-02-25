@@ -139,7 +139,7 @@ export function Sidebar() {
                 {/* Teacher Links */}
                 {role === 'teacher' && (
                     <div className="space-y-1.5 font-sans">
-                        {!isCollapsed && <p className="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">ครู / บุคลากร</p>}
+                        {!isCollapsed && <p className="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">เมนูผู้ใช้งาน</p>}
                         {teacherRoutes.map((route) => (
                             <SidebarItem key={route.href} {...route} isCollapsed={isCollapsed} />
                         ))}
@@ -181,10 +181,12 @@ export function Sidebar() {
                             <div className="flex flex-col min-w-0">
                                 <span className="text-sm font-bold truncate text-slate-900 leading-tight">{session?.user?.name}</span>
                                 <span className="text-[10px] font-semibold text-blue-600 translate-y-0.5">
-                                    {role === 'super_admin' ? 'ผู้ดูแลระบบสูงสุด' :
-                                        role === 'admin' ? 'ผู้ดูแลระบบ' :
-                                            role === 'supervisor' ? 'ศึกษานิเทศก์' :
-                                                role === 'teacher' ? 'ครู / บุคลากร' : role}
+                                    {(session?.user as any)?.position || (
+                                        role === 'super_admin' ? 'ผู้ดูแลระบบสูงสุด' :
+                                            role === 'admin' ? 'ผู้ดูแลระบบ' :
+                                                role === 'supervisor' ? 'ศึกษานิเทศก์' :
+                                                    role === 'teacher' ? 'ครู / บุคลากร' : role
+                                    )}
                                 </span>
                             </div>
                         </div>

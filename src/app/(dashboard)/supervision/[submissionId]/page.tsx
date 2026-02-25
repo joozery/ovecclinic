@@ -21,13 +21,14 @@ interface ReviewPageProps {
 }
 
 export default async function ReviewPage({ params }: ReviewPageProps) {
+    const { submissionId } = await params;
     const session = await auth();
 
     if (!session || (session.user.role !== 'supervisor' && session.user.role !== 'super_admin')) {
         redirect("/dashboard");
     }
 
-    const submission = await getSubmissionById(params.submissionId);
+    const submission = await getSubmissionById(submissionId);
 
     if (!submission) {
         return (

@@ -31,14 +31,16 @@ export function Header() {
                             <>
                                 <NotificationDropdown />
                                 <Separator orientation="vertical" className="h-6 mx-1 hidden sm:block" />
-                                <div className="flex items-center gap-3">
-                                    <div className="flex flex-col items-end hidden lg:flex">
-                                        <span className="text-sm font-semibold text-slate-900 leading-none">
+                                <div className="flex items-center gap-4 pl-4 border-l border-slate-100">
+                                    <div className="flex flex-col items-end hidden sm:flex">
+                                        <span className="text-sm font-black text-slate-800 leading-tight tracking-tight">
                                             {session.user.name}
                                         </span>
-                                        <span className="text-[11px] text-slate-500 font-medium">
-                                            {session.user.role === 'teacher' ? 'ครู/บุคลากร' :
-                                                session.user.role === 'supervisor' ? 'ศึกษานิเทศก์' : 'ผู้ดูแลระบบ'}
+                                        <span className="text-[10px] font-bold text-blue-600/70 uppercase tracking-wider bg-blue-50/50 px-2 py-0.5 rounded-md mt-0.5">
+                                            {(session.user as any).position || (
+                                                session.user.role === 'teacher' ? 'ครู / บุคลากร' :
+                                                    session.user.role === 'supervisor' ? 'ศึกษานิเทศก์' : 'ผู้ดูแลระบบ'
+                                            )}
                                         </span>
                                     </div>
                                     <UserNav user={session.user} />

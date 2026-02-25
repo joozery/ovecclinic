@@ -20,6 +20,7 @@ interface SubmitPageProps {
 }
 
 export default async function SubmitPage({ params }: SubmitPageProps) {
+    const { id } = await params;
     const session = await auth();
 
     if (!session) {
@@ -29,7 +30,7 @@ export default async function SubmitPage({ params }: SubmitPageProps) {
     // Fetch registration to get activity details
     // Ideally, we'd have a specific getRegistration function, but reusing getMyRegistrations for now and filtering
     const registrations = await getMyRegistrations();
-    const registration = registrations.find((r: any) => r._id === params.id);
+    const registration = registrations.find((r: any) => r._id === id);
 
     if (!registration) {
         return (
@@ -43,7 +44,7 @@ export default async function SubmitPage({ params }: SubmitPageProps) {
     }
 
     const activity = registration.activityId;
-    const submission = await getSubmission(params.id);
+    const submission = await getSubmission(id);
 
     return (
         <div className="space-y-8 max-w-7xl mx-auto">
@@ -138,7 +139,7 @@ export default async function SubmitPage({ params }: SubmitPageProps) {
                             )}
 
                             <SubmissionForm
-                                registrationId={params.id}
+                                registrationId={id}
                                 initialData={submission}
                             />
                         </CardContent>

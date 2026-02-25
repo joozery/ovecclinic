@@ -48,9 +48,10 @@ interface GetUsersParams {
     limit?: number;
     role?: string;
     type?: string;
+    provider?: string;
 }
 
-export async function getUsers({ query, page = 1, limit = 10, role, type }: GetUsersParams) {
+export async function getUsers({ query, page = 1, limit = 10, role, type, provider }: GetUsersParams) {
     const session = await auth();
     if (!session || (session.user.role !== 'admin' && session.user.role !== 'super_admin')) {
         throw new Error("Unauthorized");
@@ -76,19 +77,52 @@ export async function getUsers({ query, page = 1, limit = 10, role, type }: GetU
         filter.role = role;
     }
 
+    // Filter by provider
+    if (provider === "line") {
+        filter["providerAccounts.provider"] = "line";
+    } else if (provider === "google") {
+        filter["providerAccounts.provider"] = "google";
+    } else if (provider === "thaid") {
+        filter["providerAccounts.provider"] = "thaid";
+    } else if (provider === "credentials") {
+        // Users with a password set and no provider accounts (or minimal)
+        filter.password = { $exists: true };
+        filter.providerAccounts = { $size: 0 };
+    }
+
     const users = await User.find(filter)
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .select("-password"); // Exclude password
+        .select("-password");
 
     const total = await User.countDocuments(filter);
+
+    // Provider counts for summary chips (from unfiltered base)
+    const baseFilter: any = {};
+    if (type === "admins") baseFilter.role = { $in: ["admin", "super_admin"] };
+    else if (type === "members") baseFilter.role = { $in: ["teacher", "supervisor"] };
+
+    const [lineCount, googleCount, thaidCount, credCount, allCount] = await Promise.all([
+        User.countDocuments({ ...baseFilter, "providerAccounts.provider": "line" }),
+        User.countDocuments({ ...baseFilter, "providerAccounts.provider": "google" }),
+        User.countDocuments({ ...baseFilter, "providerAccounts.provider": "thaid" }),
+        User.countDocuments({ ...baseFilter, password: { $exists: true }, providerAccounts: { $size: 0 } }),
+        User.countDocuments(baseFilter),
+    ]);
 
     return {
         users: JSON.parse(JSON.stringify(users)),
         totalPages: Math.ceil(total / limit),
         currentPage: page,
         totalUsers: total,
+        providerCounts: {
+            all: allCount,
+            line: lineCount,
+            google: googleCount,
+            thaid: thaidCount,
+            credentials: credCount,
+        },
     };
 }
 
@@ -114,6 +148,36 @@ export async function updateUserRole(userId: string, newRole: string) {
 
     targetUser.role = newRole;
     await targetUser.save();
+
+    revalidatePath("/admin/users");
+    return { success: true };
+}
+
+export async function deleteUser(userId: string) {
+    const session = await auth();
+    if (!session) throw new Error("Unauthorized");
+
+    const currentUser = session.user;
+    if (currentUser.role !== 'admin' && currentUser.role !== 'super_admin') {
+        throw new Error("Unauthorized");
+    }
+
+    // Cannot delete yourself
+    if (currentUser.id === userId) {
+        throw new Error("Cannot delete your own account");
+    }
+
+    await dbConnect();
+
+    const targetUser = await User.findById(userId);
+    if (!targetUser) throw new Error("User not found");
+
+    // Only super_admin can delete other admins/super_admins
+    if ((targetUser.role === 'super_admin' || targetUser.role === 'admin') && currentUser.role !== 'super_admin') {
+        throw new Error("Only Super Admin can delete admin accounts");
+    }
+
+    await User.findByIdAndDelete(userId);
 
     revalidatePath("/admin/users");
     return { success: true };

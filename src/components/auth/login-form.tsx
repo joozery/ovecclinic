@@ -105,6 +105,7 @@ export function LoginForm() {
 
                         <Button
                             variant="outline"
+                            onClick={() => signIn("thaid", { callbackUrl: "/dashboard" })}
                             className="w-full h-14 flex items-center justify-between px-5 rounded-xl border border-slate-200 hover:bg-white hover:border-indigo-400 hover:shadow-lg hover:shadow-indigo-500/10 hover:-translate-y-0.5 transition-all duration-300 group shadow-sm bg-white"
                         >
                             <div className="flex items-center gap-5">

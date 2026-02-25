@@ -25,10 +25,11 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
     status: z.enum(['Pending', 'In Review', 'Approved', 'Rejected', 'Request Changes']),
-    feedback: z.string().min(5, "Feedback is required (at least 5 characters)"),
+    feedback: z.string().min(5, "กรุณาระบุข้อเสนอแนะอย่างน้อย 5 ตัวอักษร"),
 });
 
 interface ReviewFormProps {
@@ -52,10 +53,10 @@ export function ReviewForm({ submissionId, initialData }: ReviewFormProps) {
         startTransition(async () => {
             try {
                 await reviewSubmission(submissionId, values.status, values.feedback);
-                toast.success("Review submitted successfully!");
+                toast.success("บันทึกผลการตรวจประเมินเรียบร้อยแล้ว!");
                 router.refresh();
             } catch (error) {
-                toast.error("Failed to submit review: " + (error as Error).message);
+                toast.error("บันทึกผลการตรวจประเมินไม่สำเร็จ: " + (error as Error).message);
             }
         });
     }
@@ -68,19 +69,19 @@ export function ReviewForm({ submissionId, initialData }: ReviewFormProps) {
                     name="status"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Status</FormLabel>
+                            <FormLabel className="font-bold text-slate-700">สถานะผลงาน</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select status" />
+                                    <SelectTrigger className="h-12 rounded-xl">
+                                        <SelectValue placeholder="เลือกสถานะผลงาน" />
                                     </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    <SelectItem value="Pending">Pending</SelectItem>
-                                    <SelectItem value="In Review">In Review</SelectItem>
-                                    <SelectItem value="Approved" className="text-green-600 font-medium">Approved</SelectItem>
-                                    <SelectItem value="Request Changes" className="text-orange-600 font-medium">Request Changes</SelectItem>
-                                    <SelectItem value="Rejected" className="text-red-600 font-medium">Rejected</SelectItem>
+                                    <SelectItem value="Pending">รอการตรวจ</SelectItem>
+                                    <SelectItem value="In Review">กำลังตรวจ</SelectItem>
+                                    <SelectItem value="Approved" className="text-emerald-600 font-bold focus:text-emerald-700">อนุมัติ (ผ่านเกณฑ์)</SelectItem>
+                                    <SelectItem value="Request Changes" className="text-orange-600 font-bold focus:text-orange-700">ขอข้อมูลเพิ่มเติม</SelectItem>
+                                    <SelectItem value="Rejected" className="text-red-600 font-bold focus:text-red-700">ปฏิเสธ (ไม่อนุมัติ)</SelectItem>
                                 </SelectContent>
                             </Select>
                             <FormMessage />
@@ -92,16 +93,28 @@ export function ReviewForm({ submissionId, initialData }: ReviewFormProps) {
                     name="feedback"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Feedback / Comments</FormLabel>
+                            <FormLabel className="font-bold text-slate-700">ข้อเสนอแนะ / ความคิดเห็น</FormLabel>
                             <FormControl>
-                                <Textarea placeholder="Provide constructive feedback for the teacher..." className="min-h-[120px]" {...field} />
+                                <Textarea
+                                    placeholder="ระบุข้อเสนอแนะเพื่อเป็นประโยชน์แก่ผู้ส่งงาน..."
+                                    className="min-h-[140px] resize-none rounded-xl"
+                                    {...field}
+                                />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
-                <Button type="submit" disabled={isPending} className="w-full">
-                    {isPending ? "Submitting Review..." : "Submit Review"}
+                <Button
+                    type="submit"
+                    disabled={isPending}
+                    className="w-full h-12 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold"
+                >
+                    {isPending ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> กำลังบันทึกข้อมูล...</>
+                    ) : (
+                        "บันทึกผลประเมิน"
+                    )}
                 </Button>
             </form>
         </Form>

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, Shield, Loader2 } from "lucide-react";
+import { MoreHorizontal, Shield, Loader2, Trash2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -17,7 +17,15 @@ import {
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
-import { updateUserRole } from "@/actions/user";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { updateUserRole, deleteUser } from "@/actions/user";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -33,63 +41,158 @@ interface UserActionsProps {
 export function UserActions({ user, currentUserRole }: UserActionsProps) {
     const router = useRouter();
     const [isPending, setIsPending] = useState(false);
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    // Prevent editing Super Admins unless you are one
-    const canEdit = currentUserRole === 'super_admin' || (currentUserRole === 'admin' && user.role !== 'super_admin');
+    const canEdit = currentUserRole === 'super_admin' || (currentUserRole === 'admin' && user.role !== 'super_admin' && user.role !== 'admin');
 
     const handleRoleChange = async (newRole: string) => {
         if (newRole === user.role) return;
-
         setIsPending(true);
         try {
             await updateUserRole(user._id, newRole);
-            toast.success(`User role updated to ${newRole}`);
+            toast.success(`เปลี่ยนบทบาทเป็น "${newRole}" เรียบร้อยแล้ว`);
             router.refresh();
         } catch (error) {
-            toast.error("Failed to update role");
+            toast.error("ไม่สามารถเปลี่ยนบทบาทได้");
             console.error(error);
         } finally {
             setIsPending(false);
         }
     };
 
+    const handleDelete = async () => {
+        setIsDeleting(true);
+        try {
+            await deleteUser(user._id);
+            toast.success(`ลบบัญชีผู้ใช้ "${user.name}" เรียบร้อยแล้ว`);
+            setShowDeleteDialog(false);
+            router.refresh();
+        } catch (error: any) {
+            toast.error(error?.message || "ไม่สามารถลบบัญชีได้");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     if (!canEdit) return null;
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                    <span className="sr-only">Open menu</span>
-                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
+        <>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-slate-100 rounded-lg">
+                        <span className="sr-only">เปิดเมนู</span>
+                        {isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
+                        ) : (
+                            <MoreHorizontal className="h-4 w-4 text-slate-500" />
+                        )}
+                    </Button>
+                </DropdownMenuTrigger>
 
-                <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                        <Shield className="mr-2 h-4 w-4" />
-                        <span>Change Role</span>
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                        <DropdownMenuRadioGroup value={user.role} onValueChange={handleRoleChange}>
-                            <DropdownMenuRadioItem value="teacher">
-                                Teacher
-                            </DropdownMenuRadioItem>
-                            <DropdownMenuRadioItem value="supervisor">
-                                Supervisor
-                            </DropdownMenuRadioItem>
-                            {currentUserRole === 'super_admin' && (
-                                <DropdownMenuRadioItem value="admin">
-                                    Admin
+                <DropdownMenuContent align="end" className="w-52 rounded-xl shadow-xl border-slate-100 p-1.5">
+                    <DropdownMenuLabel className="text-[11px] font-black text-slate-400 uppercase tracking-wider px-2 pb-1">
+                        จัดการ: {user.name}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-slate-100" />
+
+                    {/* Change Role */}
+                    <DropdownMenuSub>
+                        <DropdownMenuSubTrigger className="rounded-lg text-sm font-bold cursor-pointer">
+                            <Shield className="mr-2 h-4 w-4 text-blue-500" />
+                            <span>เปลี่ยนบทบาท</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent className="rounded-xl shadow-xl border-slate-100 p-1.5 w-44">
+                            <DropdownMenuRadioGroup value={user.role} onValueChange={handleRoleChange}>
+                                <DropdownMenuRadioItem value="teacher" className="rounded-lg text-sm font-bold cursor-pointer">
+                                    ครู / บุคลากร
                                 </DropdownMenuRadioItem>
-                            )}
-                        </DropdownMenuRadioGroup>
-                    </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                                <DropdownMenuRadioItem value="supervisor" className="rounded-lg text-sm font-bold cursor-pointer">
+                                    ศึกษานิเทศก์
+                                </DropdownMenuRadioItem>
+                                {currentUserRole === 'super_admin' && (
+                                    <>
+                                        <DropdownMenuSeparator className="bg-slate-100 my-1" />
+                                        <DropdownMenuRadioItem value="admin" className="rounded-lg text-sm font-bold cursor-pointer">
+                                            ผู้ดูแลระบบ
+                                        </DropdownMenuRadioItem>
+                                    </>
+                                )}
+                            </DropdownMenuRadioGroup>
+                        </DropdownMenuSubContent>
+                    </DropdownMenuSub>
 
-            </DropdownMenuContent>
-        </DropdownMenu>
+                    <DropdownMenuSeparator className="bg-slate-100 my-1" />
+
+                    {/* Delete */}
+                    <DropdownMenuItem
+                        className="rounded-lg text-sm font-bold text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
+                        onSelect={() => setShowDeleteDialog(true)}
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        ลบบัญชีผู้ใช้นี้
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Delete Confirm Dialog */}
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent className="sm:max-w-md rounded-2xl border-none shadow-2xl">
+                    <DialogHeader className="space-y-3">
+                        <div className="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto">
+                            <AlertTriangle className="w-7 h-7 text-red-500" />
+                        </div>
+                        <DialogTitle className="text-center text-xl font-black text-slate-900">
+                            ยืนยันการลบบัญชี?
+                        </DialogTitle>
+                        <DialogDescription className="text-center text-sm font-medium text-slate-500 leading-relaxed">
+                            คุณกำลังจะลบบัญชีของ{" "}
+                            <span className="font-black text-slate-900">"{user.name}"</span>{" "}
+                            ออกจากระบบ การดำเนินการนี้{" "}
+                            <span className="font-black text-red-600">ไม่สามารถย้อนกลับได้</span>
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="bg-red-50/60 border border-red-100 rounded-xl p-4 text-xs font-bold text-red-700 space-y-1 mt-2">
+                        <p>⚠️ ข้อมูลที่จะถูกลบ:</p>
+                        <ul className="ml-4 space-y-0.5 font-medium text-red-600">
+                            <li>• ข้อมูลโปรไฟล์ทั้งหมด</li>
+                            <li>• ประวัติการลงทะเบียนกิจกรรม</li>
+                            <li>• ประกาศนียบัตรที่เชื่อมโยง</li>
+                        </ul>
+                    </div>
+
+                    <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowDeleteDialog(false)}
+                            disabled={isDeleting}
+                            className="flex-1 rounded-xl font-bold border-slate-200"
+                        >
+                            ยกเลิก
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="flex-1 rounded-xl font-black bg-red-600 hover:bg-red-700 shadow-lg shadow-red-200"
+                        >
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    กำลังลบ...
+                                </>
+                            ) : (
+                                <>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    ยืนยัน ลบบัญชี
+                                </>
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }

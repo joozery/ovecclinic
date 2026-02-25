@@ -14,7 +14,7 @@ export default async function SettingsPage() {
     }
 
     await dbConnect();
-    const user = await User.findById(session.user.id);
+    const user = await User.findById(session.user.id).select("+password");
 
     if (!user) {
         redirect("/login");
@@ -45,11 +45,19 @@ export default async function SettingsPage() {
                 </div>
             </div>
 
-            <SettingsTabs user={{
-                name: user.name,
-                phone: user.phone,
-                bio: user.bio,
-            }} />
+            <SettingsTabs
+                user={{
+                    name: user.name,
+                    phone: user.profile?.phone || "",
+                    college: user.profile?.college || "",
+                    position: user.profile?.position || "",
+                    academicStanding: user.profile?.academicStanding || "ไม่มี",
+                    region: user.profile?.region || "Central",
+                    affiliation: user.profile?.affiliation || "Government",
+                }}
+                providers={JSON.parse(JSON.stringify(user.providerAccounts || []))}
+                hasPassword={!!user.password}
+            />
         </div>
     );
 }

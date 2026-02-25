@@ -35,6 +35,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         image: user.image,
                         role: user.role,
                         isProfileComplete: user.isProfileComplete,
+                        position: user.profile?.position,
                     };
                 }
                 return null;
@@ -44,7 +45,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     callbacks: {
         ...authConfig.callbacks,
         async signIn({ user, account, profile }) {
-            if (account?.provider === "google" || account?.provider === "line") {
+            if (account?.provider === "google" || account?.provider === "line" || account?.provider === "thaid") {
                 await dbConnect();
 
                 // 1. Try to find user by provider ID first
@@ -83,6 +84,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     user.isProfileComplete = existingUser.isProfileComplete;
                     user.id = existingUser._id.toString();
                     user.email = existingUser.email;
+                    user.position = existingUser.profile?.position;
 
                     // If user was found by email but didn't have this provider account linked, add it
                     const hasProvider = existingUser.providerAccounts.some(
@@ -117,6 +119,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 token.id = user.id;
                 token.role = user.role;
                 token.isProfileComplete = user.isProfileComplete;
+                token.position = (user as any).position;
             }
             return token;
         },

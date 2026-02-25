@@ -7,7 +7,22 @@ import { User as UserIcon, Shield } from "lucide-react";
 import { ProfileForm } from "@/components/profile/profile-form";
 import { ChangePasswordForm } from "@/components/profile/change-password-form";
 
-export function SettingsTabs({ user }: { user: any }) {
+import Image from "next/image";
+
+interface ProviderAccount {
+    provider: string;
+    providerAccountId: string;
+}
+
+export function SettingsTabs({
+    user,
+    providers = [],
+    hasPassword = false
+}: {
+    user: any,
+    providers?: ProviderAccount[],
+    hasPassword?: boolean
+}) {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -21,6 +36,12 @@ export function SettingsTabs({ user }: { user: any }) {
             </div>
         );
     }
+
+    const providerConfig: Record<string, { name: string, icon: string, color: string }> = {
+        google: { name: "Google Account", icon: "/logo/google.png", color: "text-blue-600" },
+        line: { name: "LINE Application", icon: "/logo/logoline.png", color: "text-[#06C755]" },
+        thaid: { name: "ThaiID Application", icon: "/logo/thaiidlogo.png", color: "text-indigo-600" },
+    };
 
     return (
         <Tabs defaultValue="profile" className="w-full space-y-8">
@@ -58,11 +79,61 @@ export function SettingsTabs({ user }: { user: any }) {
                         </div>
                         <div>
                             <h3 className="text-2xl font-black text-slate-900">ความปลอดภัยของบัญชี</h3>
-                            <p className="text-slate-500 font-medium mt-1">แนะนำให้เปลี่ยนรหัสผ่านเป็นประจำทุก 3 เดือนเพื่อความปลอดภัยสูงสุดของข้อมูลคุณ</p>
+                            <p className="text-slate-500 font-medium mt-1">จัดการวิธีการเข้าสู่ระบบและความปลอดภัยของบัญชีคุณ</p>
                         </div>
                     </div>
-                    <div className="max-w-xl">
-                        <ChangePasswordForm />
+
+                    <div className="max-w-xl space-y-8">
+                        {/* Linked Accounts Section */}
+                        {providers.length > 0 && (
+                            <div className="space-y-4">
+                                <h4 className="text-sm font-black text-slate-400 uppercase tracking-wider">บัญชีที่เชื่อมต่ออยู่</h4>
+                                <div className="grid gap-3">
+                                    {providers.map((acc) => {
+                                        const config = providerConfig[acc.provider] || { name: acc.provider, icon: "", color: "text-slate-600" };
+                                        return (
+                                            <div key={acc.provider} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 group transition-all hover:bg-white hover:shadow-md hover:border-slate-200">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 relative bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center overflow-hidden p-2">
+                                                        {config.icon ? (
+                                                            <Image src={config.icon} alt={config.name} fill className="object-contain p-2" />
+                                                        ) : (
+                                                            <Shield className="w-5 h-5 text-slate-300" />
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-black text-slate-700">{config.name}</p>
+                                                        <div className="text-[11px] font-bold text-green-500 flex items-center gap-1">
+                                                            <div className="w-1 h-1 rounded-full bg-green-500" /> เชื่อมต่อแล้ว
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-[10px] font-black px-3 py-1 bg-white rounded-lg border border-slate-100 text-slate-400">
+                                                    ID: {acc.providerAccountId.substring(0, 8)}...
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Password Section */}
+                        {hasPassword ? (
+                            <div className="space-y-6 pt-2">
+                                <div className="space-y-1">
+                                    <h4 className="text-sm font-black text-slate-400 uppercase tracking-wider">เปลี่ยนรหัสผ่าน</h4>
+                                    <p className="text-xs font-medium text-slate-400">แนะนำให้เปลี่ยนรหัสผ่านเป็นประจำทุก 3 เดือน</p>
+                                </div>
+                                <ChangePasswordForm />
+                            </div>
+                        ) : (
+                            <div className="p-6 rounded-2xl bg-blue-50/50 border border-blue-100 text-center">
+                                <p className="text-xs font-bold text-blue-600/70">
+                                    คุณเข้าสู่ระบบผ่านผู้ให้บริการภายนอก จึงไม่ต้องตั้งรหัสผ่านในระบบนี้
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </TabsContent>

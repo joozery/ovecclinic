@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { ExportButton } from "@/components/dashboard/export-button";
 import Link from "next/link";
-import { Calendar, GraduationCap, ClipboardCheck, ArrowRight } from "lucide-react";
+import { Calendar, GraduationCap, ClipboardCheck, ArrowRight, Activity, Plus } from "lucide-react";
 
 export default async function DashboardPage() {
     const session = await auth();
@@ -26,70 +26,71 @@ export default async function DashboardPage() {
 
         return (
             <div className="space-y-8">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/50 backdrop-blur-sm p-8 rounded-xl border border-slate-100 shadow-sm">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/50 backdrop-blur-sm p-8 rounded-xl border border-slate-100 shadow-sm transition-all hover:bg-white/60">
                     <div className="space-y-1">
-                        <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">ภาพรวมระบบ<span className="text-blue-600">.</span></h1>
-                        <p className="text-sm font-medium text-slate-500">ยินดีต้อนรับกลับมา, คุณ {session.user.name} ติดตามความเคลื่อนไหวของทั้งระบบได้ที่นี่</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <ExportButton />
+                        <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">แผงควบคุมระบบ<span className="text-blue-600">.</span></h1>
+                        <p className="text-sm font-medium text-slate-500">ติดตามค่าสถิติ (KPI) และเป้าหมายของแพลตฟอร์ม</p>
                     </div>
                 </div>
 
                 <StatsCards data={systemStats} />
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-                    <Card className="lg:col-span-4 border-none bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl overflow-hidden">
+                    <Card className="lg:col-span-4 border-none bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl overflow-hidden transition-all hover:shadow-xl hover:shadow-blue-500/5">
                         <CardHeader className="p-8 pb-0">
-                            <CardTitle className="text-xl font-bold">การเติบโตของแพลตฟอร์ม</CardTitle>
-                            <CardDescription className="text-sm">จำนวนการลงทะเบียนรายเดือนในระบบตรวจสอบวิทยฐานะ</CardDescription>
+                            <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                <Activity className="w-5 h-5 text-blue-600" />
+                                แนวโน้มรายเดือน
+                            </CardTitle>
+                            <CardDescription className="text-sm font-medium">เปรียบเทียบจำนวนการลงทะเบียนย้อนหลังในช่วง 6 เดือนที่ผ่านมา</CardDescription>
                         </CardHeader>
                         <CardContent className="p-8 pl-2">
                             <OverviewChart data={monthlyStats} />
                         </CardContent>
                     </Card>
 
-                    <Card className="lg:col-span-3 border-none bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl overflow-hidden">
+                    <Card className="lg:col-span-3 border-none bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl overflow-hidden transition-all hover:shadow-xl hover:shadow-blue-500/5">
                         <CardHeader className="p-8">
-                            <CardTitle className="text-xl font-bold">เมนูด่วน</CardTitle>
-                            <CardDescription className="text-sm">ทางลัดสำหรับเข้าถึงเมนูที่คุณต้องใช้งานบ่อย</CardDescription>
+                            <CardTitle className="text-xl font-bold flex items-center gap-2">
+                                <Plus className="w-5 h-5 text-blue-600" />
+                                ปุ่มลัดอัจฉริยะ
+                            </CardTitle>
+                            <CardDescription className="text-sm font-medium">จัดการภารกิจสำคัญได้อย่างรวดเร็วในคลิกเดียว</CardDescription>
                         </CardHeader>
                         <CardContent className="p-8 pt-0 grid gap-3">
-                            <Link href="/activities/manage">
-                                <button className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 transition-all group">
-                                    <div className="flex items-center gap-3">
+                            <Link href="/activities/manage/create">
+                                <button className="w-full h-14 flex items-center justify-between px-5 bg-slate-50 hover:bg-blue-50/50 rounded-2xl border border-slate-100 hover:border-blue-200 transition-all group">
+                                    <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-blue-600 shadow-sm transition-transform group-hover:scale-110">
                                             <Calendar className="w-5 h-5" />
                                         </div>
-                                        <span className="text-sm font-bold text-slate-700">จัดการกิจกรรมการอบรม</span>
+                                        <span className="text-sm font-black text-slate-700">สร้างกิจกรรมใหม่</span>
                                     </div>
-                                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform group-hover:text-blue-500" />
                                 </button>
                             </Link>
-                            <Link href="/supervision">
-                                <button className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 transition-all group">
-                                    <div className="flex items-center gap-3">
+
+                            <Link href="/activities/manage">
+                                <button className="w-full h-14 flex items-center justify-between px-5 bg-slate-50 hover:bg-emerald-50/50 rounded-2xl border border-slate-100 hover:border-emerald-200 transition-all group">
+                                    <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-emerald-600 shadow-sm transition-transform group-hover:scale-110">
-                                            <ClipboardCheck className="w-5 h-5" />
+                                            <div className="grid grid-cols-2 gap-0.5">
+                                                <div className="w-1.5 h-1.5 bg-current rounded-[1px]" />
+                                                <div className="w-1.5 h-1.5 bg-current rounded-[1px]" />
+                                                <div className="w-1.5 h-1.5 bg-current rounded-[1px]" />
+                                                <div className="w-1.5 h-1.5 bg-current rounded-[1px]" />
+                                            </div>
                                         </div>
-                                        <span className="text-sm font-bold text-slate-700">ตรวจและประเมินผลงาน</span>
+                                        <span className="text-sm font-black text-slate-700">ปฏิทินกิจกรรม</span>
                                     </div>
-                                    <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                                    <ArrowRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform group-hover:text-emerald-500" />
                                 </button>
                             </Link>
-                            {(role === 'admin' || role === 'super_admin') && (
-                                <Link href="/admin/users">
-                                    <button className="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 transition-all group">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-orange-600 shadow-sm transition-transform group-hover:scale-110">
-                                                <GraduationCap className="w-5 h-5" />
-                                            </div>
-                                            <span className="text-sm font-bold text-slate-700">จัดการผู้ใช้งานในระบบ</span>
-                                        </div>
-                                        <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 transition-transform" />
-                                    </button>
-                                </Link>
-                            )}
+
+                            <div className="relative">
+                                <ExportButton variant="dashboard" />
+                            </div>
+
                         </CardContent>
                     </Card>
                 </div>

@@ -15,17 +15,24 @@ export async function updateProfile(formData: FormData) {
 
     const name = formData.get("name") as string;
     const phone = formData.get("phone") as string;
-    const bio = formData.get("bio") as string;
-    // Avatar handling would typically involve file upload to S3/Cloudinary.
-    // For now, we might accept a URL or just skip it if not implemented.
-    // const avatar = formData.get("avatar"); 
+    const college = formData.get("college") as string;
+    const position = formData.get("position") as string;
+    const academicStanding = formData.get("academicStanding") as string;
+    const region = formData.get("region") as string;
+    const affiliation = formData.get("affiliation") as string;
 
     await dbConnect();
 
     await User.findByIdAndUpdate(session.user.id, {
         name,
-        phone,
-        bio,
+        $set: {
+            "profile.phone": phone,
+            "profile.college": college,
+            "profile.position": position,
+            "profile.academicStanding": academicStanding,
+            "profile.region": region,
+            "profile.affiliation": affiliation,
+        }
     });
 
     revalidatePath("/settings");

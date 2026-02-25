@@ -8,8 +8,8 @@ const SubmissionSchema = new mongoose.Schema({
 
     files: [{
         name: String,
-        url: String, // In production, this would be an S3/Cloudinary URL
-        type: String, // e.g., 'application/pdf', 'image/png'
+        url: String,
+        type: { type: String }, // 'type' is a reserved keyword in Mongoose, so we define it like this
         size: Number,
     }],
     links: [{ type: String }],
@@ -27,4 +27,5 @@ const SubmissionSchema = new mongoose.Schema({
     submittedAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 
+delete mongoose.models.Submission;
 export default mongoose.models.Submission || mongoose.model('Submission', SubmissionSchema);

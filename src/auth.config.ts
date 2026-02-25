@@ -13,6 +13,30 @@ export default {
             clientId: process.env.LINE_CLIENT_ID,
             clientSecret: process.env.LINE_CLIENT_SECRET,
         }),
+        {
+            id: "thaid",
+            name: "ThaiD",
+            type: "oidc",
+            issuer: "https://imauth.bora.dopa.go.th",
+            clientId: process.env.THAID_CLIENT_ID,
+            clientSecret: process.env.THAID_CLIENT_SECRET,
+            wellKnown: "https://imauth.bora.dopa.go.th/.well-known/openid-configuration",
+            authorization: {
+                params: {
+                    scope: "openid profile pid", // Added pid scope which is common in ThaiD
+                },
+            },
+            profile(profile) {
+                return {
+                    id: profile.sub || profile.pid,
+                    name: profile.name || `${profile.given_name} ${profile.family_name}`,
+                    email: profile.email || `${profile.sub || profile.pid}@thaid.go.th`,
+                    image: profile.picture,
+                    role: "teacher",
+                    isProfileComplete: false,
+                }
+            },
+        },
     ],
     pages: {
         signIn: "/login",
@@ -63,6 +87,7 @@ export default {
                 token.id = user.id;
                 token.role = user.role;
                 token.isProfileComplete = user.isProfileComplete;
+                token.position = (user as any).position;
             }
             return token;
         },
@@ -71,6 +96,7 @@ export default {
                 session.user.id = token.id as string;
                 session.user.role = token.role as string;
                 session.user.isProfileComplete = token.isProfileComplete as boolean;
+                (session.user as any).position = token.position as string;
             }
             return session;
         },

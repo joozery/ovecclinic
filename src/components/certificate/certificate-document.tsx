@@ -9,146 +9,21 @@ Font.register({
     family: 'Noto Sans Thai',
     src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@master/hinted/ttf/NotoSansThai/NotoSansThai-Regular.ttf',
 });
-
 Font.register({
     family: 'Noto Sans Thai Bold',
     src: 'https://cdn.jsdelivr.net/gh/googlefonts/noto-fonts@master/hinted/ttf/NotoSansThai/NotoSansThai-Bold.ttf',
 });
 
-// Create styles
-const styles = StyleSheet.create({
-    page: {
-        flexDirection: 'column',
-        backgroundColor: '#FFFFFF',
-        padding: 0,
-        fontFamily: 'Noto Sans Thai',
-    },
-    background: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: '#fffdf9', // Ivory background
-    },
-    borderOuter: {
-        position: 'absolute',
-        top: 20,
-        left: 20,
-        right: 20,
-        bottom: 20,
-        border: '2px solid #b8860b', // Dark gold
-    },
-    borderInner: {
-        position: 'absolute',
-        top: 30,
-        left: 30,
-        right: 30,
-        bottom: 30,
-        border: '1px solid #b8860b',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: 40,
-    },
-    logo: {
-        width: 100,
-        height: 100,
-        marginBottom: 20,
-    },
-    header: {
-        fontSize: 32,
-        fontFamily: 'Noto Sans Thai Bold',
-        marginBottom: 10,
-        color: '#1a237e',
-        textAlign: 'center',
-    },
-    subheader: {
-        fontSize: 16,
-        marginBottom: 30,
-        color: '#555',
-        textAlign: 'center',
-    },
-    recipientLabel: {
-        fontSize: 14,
-        color: '#777',
-        marginBottom: 10,
-    },
-    recipientName: {
-        fontSize: 36,
-        fontFamily: 'Noto Sans Thai Bold',
-        marginBottom: 10,
-        color: '#000',
-        textAlign: 'center',
-        borderBottom: '1.5px solid #b8860b',
-        minWidth: 400,
-        paddingBottom: 5,
-    },
-    description: {
-        fontSize: 14,
-        marginTop: 20,
-        marginBottom: 10,
-        textAlign: 'center',
-        color: '#555',
-        lineHeight: 1.5,
-    },
-    courseTitle: {
-        fontSize: 22,
-        fontFamily: 'Noto Sans Thai Bold',
-        marginTop: 5,
-        marginBottom: 20,
-        color: '#1a237e',
-        textAlign: 'center',
-    },
-    dateAndCodeRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-        marginTop: 40,
-        paddingHorizontal: 40,
-    },
-    signatureBlock: {
-        alignItems: 'center',
-        width: 250,
-    },
-    signatureLine: {
-        width: '100%',
-        borderBottom: '1px solid #333',
-        marginBottom: 8,
-    },
-    signatureTitle: {
-        fontSize: 12,
-        color: '#333',
-        fontFamily: 'Noto Sans Thai Bold',
-    },
-    signatureRole: {
-        fontSize: 10,
-        color: '#777',
-    },
-    sealContainer: {
-        position: 'absolute',
-        bottom: 100,
-        right: 120,
-        width: 100,
-        height: 100,
-        opacity: 0.8,
-    },
-    code: {
-        position: 'absolute',
-        bottom: 45,
-        right: 45,
-        fontSize: 9,
-        color: '#b8860b',
-        fontFamily: 'Noto Sans Thai Bold',
-    },
-    footerLink: {
-        position: 'absolute',
-        bottom: 45,
-        left: 45,
-        fontSize: 8,
-        color: '#aaa',
-    }
-});
+interface TextField {
+    id: string;
+    label: string;
+    x: number;
+    y: number;
+    fontSize: number;
+    fontWeight: string;
+    color: string;
+    align: string;
+}
 
 interface CertificateData {
     recipientName: string;
@@ -158,44 +33,140 @@ interface CertificateData {
     issuerName?: string;
 }
 
-// Create Document Component
-export const CertificateDocument = ({ data }: { data: CertificateData }) => (
-    <Document>
-        <Page size="A4" orientation="landscape" style={styles.page}>
-            <View style={styles.background} />
-            <View style={styles.borderOuter} />
-            <View style={styles.borderInner}>
-                <Text style={styles.header}>เกียรติบัตรแสดงความสำเร็จ</Text>
-                <Text style={styles.subheader}>OVEC Activity & Training Platform</Text>
+interface CertificateTemplate {
+    backgroundImageUrl?: string;
+    fields?: TextField[];
+    signerName?: string;
+    signerPosition?: string;
+    orgName?: string;
+}
 
-                <Text style={styles.recipientLabel}>ขอมอบเกียรติบัตรฉบับนี้ให้ไว้เพื่อแสดงว่า</Text>
-                <Text style={styles.recipientName}>{data.recipientName}</Text>
+// A4 Landscape: 841.89 x 595.28 pt
+const PAGE_W = 841.89;
+const PAGE_H = 595.28;
 
-                <Text style={styles.description}>
-                    ได้ผ่านการเข้าร่วมและการทดสอบตามเกณฑ์วัดผล ประจำหลักสูตรการพัฒนาบุคลากร
-                </Text>
-                <Text style={styles.courseTitle}>"{data.courseTitle}"</Text>
+function getFieldValue(id: string, data: CertificateData): string {
+    switch (id) {
+        case 'recipientName': return data.recipientName;
+        case 'courseTitle': return `"${data.courseTitle}"`;
+        case 'completionDate': return `ให้ไว้ ณ วันที่ ${format(new Date(data.completionDate), 'd MMMM yyyy')}`;
+        case 'certificateCode': return `เลขที่: ${data.certificateCode}`;
+        default: return id;
+    }
+}
 
-                <Text style={styles.description}>
-                    ให้ไว้ ณ วันที่ {format(new Date(data.completionDate), 'd MMMM yyyy')}
-                </Text>
+const s = StyleSheet.create({
+    page: { fontFamily: 'Noto Sans Thai', position: 'relative' },
+    bg: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#fffdf9' },
+    borderOuter: { position: 'absolute', top: 20, left: 20, right: 20, bottom: 20, border: '2px solid #b8860b' },
+    borderInner: { position: 'absolute', top: 30, left: 30, right: 30, bottom: 30, border: '1px solid #b8860b' },
+    content: {
+        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+        flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 50,
+    },
+    header: { fontSize: 32, fontFamily: 'Noto Sans Thai Bold', color: '#1a237e', textAlign: 'center', marginBottom: 8 },
+    subheader: { fontSize: 14, color: '#555', textAlign: 'center', marginBottom: 24 },
+    recipientLabel: { fontSize: 13, color: '#777', marginBottom: 8 },
+    recipientName: {
+        fontSize: 32, fontFamily: 'Noto Sans Thai Bold', color: '#000',
+        textAlign: 'center', borderBottom: '1.5px solid #b8860b',
+        minWidth: 400, paddingBottom: 5, marginBottom: 16,
+    },
+    courseTitle: { fontSize: 20, fontFamily: 'Noto Sans Thai Bold', color: '#1a237e', textAlign: 'center', marginBottom: 8 },
+    dateText: { fontSize: 13, color: '#555', textAlign: 'center', marginBottom: 32 },
+    sigRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', paddingHorizontal: 60, marginTop: 'auto' },
+    sigBlock: { alignItems: 'center', width: 220 },
+    sigLine: { width: '100%', borderBottom: '1px solid #333', marginBottom: 6 },
+    sigName: { fontSize: 12, fontFamily: 'Noto Sans Thai Bold', color: '#333' },
+    sigRole: { fontSize: 10, color: '#777' },
+    code: { position: 'absolute', bottom: 42, right: 45, fontSize: 9, color: '#b8860b', fontFamily: 'Noto Sans Thai Bold' },
+    footer: { position: 'absolute', bottom: 42, left: 45, fontSize: 8, color: '#aaa' },
+});
 
-                <View style={styles.dateAndCodeRow}>
-                    <View style={styles.signatureBlock}>
-                        <View style={styles.signatureLine} />
-                        <Text style={styles.signatureTitle}>{data.issuerName || "ผู้อำนวยการเทคนิค"}</Text>
-                        <Text style={styles.signatureRole}>ผู้ให้การรับรองวิทยฐานะ</Text>
+export const CertificateDocument = ({ data, template }: { data: CertificateData; template?: CertificateTemplate }) => {
+    const hasBg = !!template?.backgroundImageUrl;
+    const hasFields = !!(template?.fields && template.fields.length > 0);
+
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
+    const bgUrl = hasBg && template!.backgroundImageUrl!.startsWith('http')
+        ? `${baseUrl}/api/proxy-image?url=${encodeURIComponent(template!.backgroundImageUrl!)}`
+        : template?.backgroundImageUrl;
+
+    return (
+        <Document>
+            <Page size="A4" orientation="landscape" style={s.page}>
+
+                {/* Background */}
+                {hasBg ? (
+                    <Image src={bgUrl!} style={s.bg} />
+                ) : (
+                    <>
+                        <View style={s.bg} />
+                        <View style={s.borderOuter} />
+                        <View style={s.borderInner} />
+                    </>
+                )}
+
+                {/* Custom positioned fields (template with background) */}
+                {hasBg && hasFields && template!.fields!.map((field) => {
+                    const x = (field.x / 100) * PAGE_W;
+                    const y = (field.y / 100) * PAGE_H;
+                    const isBold = field.fontWeight === 'bold';
+                    const textWidth = 400;
+                    const leftPos = field.align === 'center' ? x - textWidth / 2
+                        : field.align === 'right' ? x - textWidth : x;
+                    return (
+                        <Text
+                            key={field.id}
+                            style={{
+                                position: 'absolute',
+                                left: Math.max(10, leftPos),
+                                top: y - field.fontSize / 2,
+                                width: textWidth,
+                                fontSize: field.fontSize,
+                                fontFamily: isBold ? 'Noto Sans Thai Bold' : 'Noto Sans Thai',
+                                color: field.color,
+                                textAlign: field.align as any,
+                            }}
+                        >
+                            {getFieldValue(field.id, data)}
+                        </Text>
+                    );
+                })}
+
+                {/* Fallback layout when no background */}
+                {!hasBg && (
+                    <View style={s.content}>
+                        <Text style={s.header}>เกียรติบัตร</Text>
+                        <Text style={s.subheader}>OVEC Activity & Training Platform</Text>
+                        <Text style={s.recipientLabel}>ขอมอบเกียรติบัตรฉบับนี้แก่</Text>
+                        <Text style={s.recipientName}>{data.recipientName}</Text>
+                        <Text style={s.courseTitle}>{data.courseTitle}</Text>
+                        <Text style={s.dateText}>
+                            ให้ไว้ ณ วันที่ {format(new Date(data.completionDate), 'd MMMM yyyy')}
+                        </Text>
+                        <View style={s.sigRow}>
+                            <View style={s.sigBlock}>
+                                <View style={s.sigLine} />
+                                <Text style={s.sigName}>{template?.signerName || data.issuerName || 'ผู้อำนวยการ'}</Text>
+                                <Text style={s.sigRole}>{template?.signerPosition || 'ผู้ให้การรับรองวิทยฐานะ'}</Text>
+                            </View>
+                            <View style={s.sigBlock}>
+                                <View style={s.sigLine} />
+                                <Text style={s.sigName}>{template?.orgName || 'สำนักงานคณะกรรมการการอาชีวศึกษา'}</Text>
+                                <Text style={s.sigRole}>หน่วยงานส่งเสริมการพัฒนาบุคลากร</Text>
+                            </View>
+                        </View>
                     </View>
-                    <View style={styles.signatureBlock}>
-                        <View style={styles.signatureLine} />
-                        <Text style={styles.signatureTitle}>สำนักงานคณะกรรมการการอาชีวศึกษา</Text>
-                        <Text style={styles.signatureRole}>หน่วยงานส่งเสริมการพัฒนาบุคลากร</Text>
-                    </View>
-                </View>
+                )}
 
-                <Text style={styles.code}>เลขที่อ้างอิง: {data.certificateCode}</Text>
-                <Text style={styles.footerLink}>ตรวจสอบความถูกต้องได้ที่: {process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/verify/{data.certificateCode}</Text>
-            </View>
-        </Page>
-    </Document>
-);
+                {/* Footer metadata */}
+                <Text style={s.code}>เลขที่อ้างอิง: {data.certificateCode}</Text>
+                <Text style={s.footer}>
+                    ตรวจสอบได้ที่: {process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/verify/{data.certificateCode}
+                </Text>
+
+            </Page>
+        </Document>
+    );
+};
