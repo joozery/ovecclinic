@@ -1,23 +1,51 @@
 
 import { getMyRegistrations } from "@/actions/registration";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { getMySubmissions } from "@/actions/submission";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Ticket, FolderUp } from "lucide-react";
+import { Calendar, MapPin, Ticket, FolderUp, Clock, CheckCircle2, XCircle, AlertCircle, FileText, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
+import { th } from "date-fns/locale";
 import { auth } from "@/auth";
 import Link from "next/link";
 import { CancelButton } from "@/components/activity/cancel-button";
 import { redirect } from "next/navigation";
+import { cn } from "@/lib/utils";
+
+const submissionStatusConfig: Record<string, { label: string; icon: any; className: string; dotClass: string }> = {
+    Pending: {
+        label: "รอตรวจประเมิน",
+        icon: Clock,
+        className: "bg-amber-50 text-amber-700 border-amber-200",
+        dotClass: "bg-amber-400",
+    },
+    Approved: {
+        label: "อนุมัติแล้ว",
+        icon: CheckCircle2,
+        className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+        dotClass: "bg-emerald-500",
+    },
+    Rejected: {
+        label: "ไม่ผ่านการประเมิน",
+        icon: XCircle,
+        className: "bg-red-50 text-red-700 border-red-200",
+        dotClass: "bg-red-500",
+    },
+    "Request Changes": {
+        label: "ขอแก้ไขเพิ่มเติม",
+        icon: AlertCircle,
+        className: "bg-orange-50 text-orange-700 border-orange-200",
+        dotClass: "bg-orange-500",
+    },
+};
 
 export default async function MyActivitiesPage() {
     const session = await auth();
-
-    if (!session) {
-        redirect("/login");
-    }
+    if (!session) redirect("/login");
 
     const registrations = await getMyRegistrations();
+    const registrationIds = registrations.map((r: any) => r._id);
+    const submissionsMap = await getMySubmissions(registrationIds);
 
     return (
         <div className="space-y-8">
@@ -38,6 +66,10 @@ export default async function MyActivitiesPage() {
                     const activity = reg.activityId;
                     if (!activity) return null;
 
+                    const submission = submissionsMap[reg._id];
+                    const subStatus = submission ? submissionStatusConfig[submission.status] : null;
+                    const SubIcon = subStatus?.icon;
+
                     return (
                         <Card key={reg._id} className="flex flex-col h-full border-none bg-white/80 backdrop-blur-sm shadow-sm hover:shadow-xl transition-all duration-300 rounded-[2rem] overflow-hidden group">
                             <CardHeader className="pb-4">
@@ -47,7 +79,7 @@ export default async function MyActivitiesPage() {
                                             reg.status === 'Completed' ? 'เสร็จสิ้น' : reg.status}
                                     </Badge>
                                     <span className="text-[11px] font-medium text-slate-400">
-                                        ลงทะเบียนเมื่อ: {format(new Date(reg.registeredAt), "dd MMM")}
+                                        {format(new Date(reg.registeredAt), "d MMM", { locale: th })}
                                     </span>
                                 </div>
                                 <CardTitle className="line-clamp-2 text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
@@ -57,7 +89,8 @@ export default async function MyActivitiesPage() {
                                     <Ticket className="w-3.5 h-3.5" /> หมายเลข: {reg._id.slice(-6).toUpperCase()}
                                 </div>
                             </CardHeader>
-                            <CardContent className="flex-1 space-y-5 pt-0">
+
+                            <CardContent className="flex-1 space-y-4 pt-0">
                                 <div className="space-y-3">
                                     <div className="flex items-start gap-3 text-[13px] text-slate-600">
                                         <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
@@ -65,7 +98,8 @@ export default async function MyActivitiesPage() {
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="font-bold text-slate-900">
-                                                {format(new Date(activity.startTime), "dd MMMM yyyy")}
+                                                {format(new Date(activity.startTime), "d MMMM yyyy", { locale: th })}
+                                                {' '}(พ.ศ. {new Date(activity.startTime).getFullYear() + 543})
                                             </span>
                                             <span className="text-slate-500">
                                                 {format(new Date(activity.startTime), "HH:mm")} - {format(new Date(activity.endTime), "HH:mm")} น.
@@ -79,20 +113,56 @@ export default async function MyActivitiesPage() {
                                         <span className="line-clamp-2 pt-1">{activity.location}</span>
                                     </div>
                                 </div>
+
+                                {/* ---- Submission Status ---- */}
+                                {submission ? (
+                                    <div className={cn("rounded-2xl border p-3.5 space-y-2", subStatus?.className)}>
+                                        <div className="flex items-center gap-2">
+                                            {SubIcon && <SubIcon className="w-4 h-4 shrink-0" />}
+                                            <span className="text-xs font-black">{subStatus?.label}</span>
+                                        </div>
+                                        {submission.feedback && (
+                                            <p className="text-[11px] font-medium leading-relaxed opacity-80 line-clamp-2">
+                                                📝 {submission.feedback}
+                                            </p>
+                                        )}
+                                        <p className="text-[10px] font-bold opacity-60">
+                                            ส่งเมื่อ {format(new Date(submission.submittedAt), "d MMM yyyy HH:mm", { locale: th })} น.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-3 flex items-center gap-2 text-slate-400">
+                                        <FileText className="w-4 h-4 shrink-0" />
+                                        <span className="text-xs font-bold">ยังไม่ได้ส่งผลงาน</span>
+                                    </div>
+                                )}
                             </CardContent>
+
                             <CardFooter className="pt-4 border-t bg-slate-50/30 flex gap-3 p-6">
                                 <Link href={`/my-activities/${reg._id}/submit`} className="flex-1">
-                                    <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md shadow-blue-100 transition-all active:scale-95">
-                                        <FolderUp className="w-4 h-4" /> ส่งผลงาน
+                                    <button className={cn(
+                                        "w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm shadow-md transition-all active:scale-95",
+                                        submission
+                                            ? "bg-slate-700 hover:bg-slate-800 text-white shadow-slate-200"
+                                            : "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100"
+                                    )}>
+                                        {submission ? (
+                                            <><ChevronRight className="w-4 h-4" /> ดูและแก้ไขผลงาน</>
+                                        ) : (
+                                            <><FolderUp className="w-4 h-4" /> ส่งผลงาน</>
+                                        )}
                                     </button>
                                 </Link>
-                                <div className="flex-none">
-                                    <CancelButton registrationId={reg._id} />
-                                </div>
+                                {!submission && (
+                                    <div className="flex-none">
+                                        <CancelButton registrationId={reg._id} />
+                                    </div>
+                                )}
                             </CardFooter>
                         </Card>
                     );
                 })}
+
                 {registrations.length === 0 && (
                     <div className="col-span-full flex flex-col items-center justify-center py-24 bg-white/40 border border-dashed border-slate-200 rounded-[3rem] text-slate-400">
                         <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mb-6">

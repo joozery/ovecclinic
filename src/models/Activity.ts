@@ -7,10 +7,11 @@ const ActivitySchema = new mongoose.Schema({
     startTime: { type: Date, required: true },
     endTime: { type: Date, required: true },
     quota: { type: Number, required: true, min: 1 },
-    location: { type: String, required: true }, // Can be a URL or physical address
-    meetingId: { type: String }, // For virtual meetings (Zoom/Teams)
-    meetingPassword: { type: String }, // For virtual meetings
-    bannerImage: { type: String }, // URL from Cloudinary/R2
+    location: { type: String, required: true },
+    targetBranch: { type: String }, // สาขาวิชาที่สอน
+    meetingId: { type: String },
+    meetingPassword: { type: String },
+    bannerImage: { type: String },
     documents: [{
         name: { type: String, required: true },
         url: { type: String, required: true },

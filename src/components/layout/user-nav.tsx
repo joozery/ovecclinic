@@ -2,12 +2,6 @@
 "use client";
 
 import {
-    Avatar,
-    AvatarFallback,
-    AvatarImage,
-} from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuGroup,
@@ -18,7 +12,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
-import { User, Settings, LogOut } from "lucide-react";
+import Image from "next/image";
+import { Settings, LogOut } from "lucide-react";
 
 interface UserNavProps {
     user: any;
@@ -28,20 +23,44 @@ export function UserNav({ user }: UserNavProps) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                        <AvatarImage src={user?.image || ""} alt={user?.name || ""} />
-                        <AvatarFallback>{user?.name?.[0] || "U"}</AvatarFallback>
-                    </Avatar>
-                </Button>
+                <button className="relative h-9 w-9 rounded-full overflow-hidden ring-2 ring-slate-100 hover:ring-blue-300 transition-all focus:outline-none focus:ring-blue-400">
+                    {user?.image ? (
+                        <Image
+                            src={user.image}
+                            alt={user?.name || "User"}
+                            fill
+                            className="object-cover"
+                        />
+                    ) : (
+                        <div className="h-full w-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                            {user?.name?.[0]?.toUpperCase() || "U"}
+                        </div>
+                    )}
+                </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{user?.name}</p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                            {user?.email}
-                        </p>
+                    <div className="flex items-center gap-3">
+                        <div className="relative h-10 w-10 rounded-full overflow-hidden shrink-0">
+                            {user?.image ? (
+                                <Image
+                                    src={user.image}
+                                    alt={user?.name || "User"}
+                                    fill
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="h-full w-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                                    {user?.name?.[0]?.toUpperCase() || "U"}
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex flex-col space-y-0.5 min-w-0">
+                            <p className="text-sm font-bold leading-none truncate">{user?.name}</p>
+                            <p className="text-xs leading-none text-muted-foreground truncate">
+                                {user?.email}
+                            </p>
+                        </div>
                     </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

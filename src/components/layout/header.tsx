@@ -6,6 +6,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { useSession } from "next-auth/react";
 import { SearchInput } from "@/components/search-input";
 import { Separator } from "@/components/ui/separator";
+import { Suspense } from "react";
 
 export function Header() {
     const { data: session } = useSession();
@@ -19,10 +20,12 @@ export function Header() {
                 <div className="flex flex-1 items-center justify-between gap-4 md:gap-8">
                     {/* Page Context / Search */}
                     <div className="flex-1 flex items-center gap-4 max-w-xl hidden sm:flex">
-                        <SearchInput
-                            placeholder="ค้นหากิจกรรม, ประกาศ หรือเกียรติบัตร..."
-                            className="w-full bg-slate-50/50 border-none shadow-none focus-within:bg-white focus-within:shadow-sm transition-all"
-                        />
+                        <Suspense fallback={<div className="w-full h-10 bg-slate-100 animate-pulse rounded-md"></div>}>
+                            <SearchInput
+                                placeholder="ค้นหากิจกรรม, ประกาศ หรือเกียรติบัตร..."
+                                className="w-full bg-slate-50/50 border-none shadow-none focus-within:bg-white focus-within:shadow-sm transition-all"
+                            />
+                        </Suspense>
                     </div>
 
                     {/* Right Side Actions */}

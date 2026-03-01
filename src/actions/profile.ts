@@ -14,26 +14,37 @@ export async function updateProfile(formData: FormData) {
     }
 
     const name = formData.get("name") as string;
+    const idCard = formData.get("idCard") as string;
     const phone = formData.get("phone") as string;
     const college = formData.get("college") as string;
+    const province = formData.get("province") as string;
     const position = formData.get("position") as string;
     const academicStanding = formData.get("academicStanding") as string;
     const region = formData.get("region") as string;
     const affiliation = formData.get("affiliation") as string;
+    const image = formData.get("image") as string;
 
     await dbConnect();
 
-    await User.findByIdAndUpdate(session.user.id, {
+    const updateData: any = {
         name,
+        idCard,
         $set: {
             "profile.phone": phone,
             "profile.college": college,
+            "profile.province": province,
             "profile.position": position,
             "profile.academicStanding": academicStanding,
             "profile.region": region,
             "profile.affiliation": affiliation,
         }
-    });
+    };
+
+    if (image) {
+        updateData.image = image;
+    }
+
+    await User.findByIdAndUpdate(session.user.id, updateData);
 
     revalidatePath("/settings");
     return { success: true };

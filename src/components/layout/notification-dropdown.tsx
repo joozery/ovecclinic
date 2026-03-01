@@ -18,6 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from "@/actions/notification";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import { th } from "date-fns/locale";
 
 export function NotificationDropdown() {
     const [count, setCount] = useState(0);
@@ -66,10 +67,10 @@ export function NotificationDropdown() {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-80" align="end" forceMount>
                 <DropdownMenuLabel className="flex justify-between items-center font-normal">
-                    <span className="font-semibold">Notifications</span>
+                    <span className="font-semibold">การแจ้งเตือน</span>
                     {count > 0 && (
                         <Button variant="ghost" size="sm" className="h-auto px-2 text-xs text-blue-600" onClick={handleMarkAllRead}>
-                            Mark all read
+                            อ่านทั้งหมด
                         </Button>
                     )}
                 </DropdownMenuLabel>
@@ -77,7 +78,7 @@ export function NotificationDropdown() {
                 <ScrollArea className="h-[300px]">
                     {notifications.length === 0 ? (
                         <div className="p-4 text-center text-sm text-muted-foreground">
-                            No new notifications
+                            ไม่มีการแจ้งเตือนใหม่
                         </div>
                     ) : (
                         <div className="flex flex-col gap-1 p-1">
@@ -108,7 +109,7 @@ export function NotificationDropdown() {
                                                 {notification.message}
                                             </p>
                                             <p className="text-[10px] text-gray-400">
-                                                {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
+                                                {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true, locale: th })}
                                             </p>
                                         </div>
                                         {!notification.isRead && (

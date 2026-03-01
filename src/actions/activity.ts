@@ -18,6 +18,7 @@ export async function createActivity(formData: FormData) {
     const endTime = formData.get("endTime");
     const quota = Number(formData.get("quota"));
     const location = formData.get("location");
+    const targetBranch = formData.get("targetBranch") as string | null;
     const meetingId = formData.get("meetingId");
     const meetingPassword = formData.get("meetingPassword");
     const bannerImage = formData.get("bannerImage");
@@ -37,6 +38,7 @@ export async function createActivity(formData: FormData) {
         endTime: new Date(endTime as string),
         quota,
         location,
+        targetBranch: targetBranch || undefined,
         meetingId,
         meetingPassword,
         bannerImage,
@@ -122,6 +124,7 @@ export async function updateActivity(id: string, formData: FormData) {
     const endTime = formData.get("endTime");
     const quota = Number(formData.get("quota"));
     const location = formData.get("location");
+    const targetBranch = formData.get("targetBranch") as string | null;
     const meetingId = formData.get("meetingId");
     const meetingPassword = formData.get("meetingPassword");
     const bannerImage = formData.get("bannerImage");
@@ -141,6 +144,7 @@ export async function updateActivity(id: string, formData: FormData) {
         endTime: new Date(endTime as string),
         quota,
         location,
+        targetBranch: targetBranch || undefined,
         meetingId,
         meetingPassword,
         bannerImage,

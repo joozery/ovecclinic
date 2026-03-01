@@ -24,7 +24,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
     const { submissionId } = await params;
     const session = await auth();
 
-    if (!session || (session.user.role !== 'supervisor' && session.user.role !== 'super_admin')) {
+    if (!session || (session.user.role !== 'supervisor' && session.user.role !== 'super_admin' && session.user.role !== 'admin')) {
         redirect("/dashboard");
     }
 
@@ -138,12 +138,18 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
                                                 <div className="flex flex-col flex-1 min-w-0">
                                                     <span className="text-sm font-bold text-slate-900 truncate">{file.name}</span>
                                                     <span className="text-[11px] text-slate-400 font-medium">
-                                                        {(file.size / 1024).toFixed(1)} KB
+                                                        {file.size ? `${(file.size / 1024).toFixed(1)} KB` : "ไฟล์แนบ"}
                                                     </span>
                                                 </div>
-                                                <button className="px-4 py-2 bg-white hover:bg-blue-600 hover:text-white border border-slate-200 rounded-xl font-bold text-[11px] transition-all active:scale-95 shadow-sm">
-                                                    ดาวน์โหลด
-                                                </button>
+                                                <a
+                                                    href={file.url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    download={file.name}
+                                                    className="px-4 py-2 bg-white hover:bg-blue-600 hover:text-white border border-slate-200 rounded-xl font-bold text-[11px] transition-all active:scale-95 shadow-sm flex items-center gap-1.5 whitespace-nowrap"
+                                                >
+                                                    <ExternalLink className="w-3 h-3" /> เปิดไฟล์
+                                                </a>
                                             </div>
                                         ))}
                                     </div>

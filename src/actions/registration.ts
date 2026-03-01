@@ -28,13 +28,17 @@ export async function registerForActivity(activityId: string) {
         throw new Error("Activity is not open for registration");
     }
 
-    // Check quota
-    const currentRegistrations = await Registration.countDocuments({ activityId, status: 'Registered' });
+    // Check quota (ไม่นับ userId เดิมของตัวเอง เผื่อให้รีแอคทิฟไม่ชน quota)
+    const currentRegistrations = await Registration.countDocuments({
+        activityId,
+        status: 'Registered',
+        userId: { $ne: session.user.id },
+    });
     if (currentRegistrations >= activity.quota) {
         throw new Error("Activity is fully booked");
     }
 
-    // Check if already registered
+    // Check if already registered (active)
     const existingRegistration = await Registration.findOne({
         userId: session.user.id,
         activityId,
@@ -45,11 +49,12 @@ export async function registerForActivity(activityId: string) {
         throw new Error("You are already registered for this activity");
     }
 
-    await Registration.create({
-        userId: session.user.id,
-        activityId,
-        status: 'Registered',
-    });
+    // ถ้าเคยยกเลิกไว้ก่อน → รีแอคทิฟเทนสร้างใหม่ (ป้องกัน duplicate key)
+    await Registration.findOneAndUpdate(
+        { userId: session.user.id, activityId },
+        { $set: { status: 'Registered', registeredAt: new Date() } },
+        { upsert: true, new: true }
+    );
 
     // Send Notification Email
     try {

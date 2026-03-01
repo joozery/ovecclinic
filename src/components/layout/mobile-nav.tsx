@@ -69,24 +69,24 @@ export function MobileNav() {
 
                     {session ? (
                         <>
-                            {session.user.role === 'teacher' && (
-                                <>
-                                    <Link
-                                        href="/my-activities"
-                                        className="text-lg font-medium hover:text-blue-600 transition-colors"
-                                        onClick={() => setOpen(false)}
-                                    >
-                                        งานของฉัน
-                                    </Link>
-                                    <Link
-                                        href="/my-certificates"
-                                        className="text-lg font-medium hover:text-blue-600 transition-colors"
-                                        onClick={() => setOpen(false)}
-                                    >
-                                        เกียรติบัตร
-                                    </Link>
-                                </>
-                            )}
+                            {/* เมนูส่วนตัว — แสดงทุก role */}
+                            <>
+                                <Link
+                                    href="/my-activities"
+                                    className="text-lg font-medium hover:text-blue-600 transition-colors"
+                                    onClick={() => setOpen(false)}
+                                >
+                                    งานของฉัน
+                                </Link>
+                                <Link
+                                    href="/my-certificates"
+                                    className="text-lg font-medium hover:text-blue-600 transition-colors"
+                                    onClick={() => setOpen(false)}
+                                >
+                                    เกียรติบัตร
+                                </Link>
+                            </>
+
                             {(session.user.role === 'supervisor' || session.user.role === 'admin' || session.user.role === 'super_admin') && (
                                 <>
                                     <Link

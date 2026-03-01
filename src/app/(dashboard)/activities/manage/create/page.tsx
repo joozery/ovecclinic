@@ -4,6 +4,7 @@ import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 export default async function CreateActivityPage() {
     const session = await auth();
@@ -27,7 +28,9 @@ export default async function CreateActivityPage() {
             </div>
 
             <div className="bg-white p-8 md:p-10 rounded-[2rem] border border-slate-100 shadow-sm">
-                <ActivityForm onSuccessRedirect="/activities/manage" />
+                <Suspense fallback={<div>กำลังโหลด...</div>}>
+                    <ActivityForm onSuccessRedirect="/activities/manage" />
+                </Suspense>
             </div>
         </div>
     );

@@ -76,8 +76,10 @@ export default {
             if (trigger === "update" && session) {
                 if (session.user) {
                     token = { ...token, ...session.user }
+                    if (session.user.image) token.picture = session.user.image;
                 } else {
                     token = { ...token, ...session }
+                    if (session.image) token.picture = session.image;
                 }
             }
             // Note: We cannot query DB in Edge runtime here easily without an adapter.
@@ -88,6 +90,7 @@ export default {
                 token.role = user.role;
                 token.isProfileComplete = user.isProfileComplete;
                 token.position = (user as any).position;
+                if (user.image) token.picture = user.image;
             }
             return token;
         },
@@ -97,6 +100,8 @@ export default {
                 session.user.role = token.role as string;
                 session.user.isProfileComplete = token.isProfileComplete as boolean;
                 (session.user as any).position = token.position as string;
+                if (token.picture) session.user.image = token.picture as string;
+                else if (token.image) session.user.image = token.image as string;
             }
             return session;
         },

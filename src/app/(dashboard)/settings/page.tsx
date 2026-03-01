@@ -48,12 +48,15 @@ export default async function SettingsPage() {
             <SettingsTabs
                 user={{
                     name: user.name,
+                    idCard: user.idCard || "",
                     phone: user.profile?.phone || "",
                     college: user.profile?.college || "",
+                    province: user.profile?.province || "",
                     position: user.profile?.position || "",
                     academicStanding: user.profile?.academicStanding || "ไม่มี",
                     region: user.profile?.region || "Central",
                     affiliation: user.profile?.affiliation || "Government",
+                    image: user.image || null,
                 }}
                 providers={JSON.parse(JSON.stringify(user.providerAccounts || []))}
                 hasPassword={!!user.password}

@@ -28,7 +28,7 @@ import {
 export default async function SupervisionDashboard() {
     const session = await auth();
 
-    if (!session || (session.user.role !== 'supervisor' && session.user.role !== 'super_admin')) {
+    if (!session || (session.user.role !== 'supervisor' && session.user.role !== 'super_admin' && session.user.role !== 'admin')) {
         redirect("/dashboard");
     }
 

@@ -23,6 +23,7 @@ import {
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import { useSidebar } from "./sidebar-context";
+import { ReportIssueButton } from "./report-issue-button";
 
 export function Sidebar() {
     const pathname = usePathname();
@@ -136,15 +137,13 @@ export function Sidebar() {
                     ))}
                 </div>
 
-                {/* Teacher Links */}
-                {role === 'teacher' && (
-                    <div className="space-y-1.5 font-sans">
-                        {!isCollapsed && <p className="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">เมนูผู้ใช้งาน</p>}
-                        {teacherRoutes.map((route) => (
-                            <SidebarItem key={route.href} {...route} isCollapsed={isCollapsed} />
-                        ))}
-                    </div>
-                )}
+                {/* Personal Links — แสดงทุก role */}
+                <div className="space-y-1.5 font-sans">
+                    {!isCollapsed && <p className="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">เมนูส่วนตัว</p>}
+                    {teacherRoutes.map((route) => (
+                        <SidebarItem key={route.href} {...route} isCollapsed={isCollapsed} />
+                    ))}
+                </div>
 
                 {/* Management Links */}
                 {(role === 'supervisor' || role === 'admin' || role === 'super_admin') && (
@@ -165,6 +164,11 @@ export function Sidebar() {
                         ))}
                     </div>
                 )}
+
+                {/* แจ้งปัญหา — ทุก role */}
+                <div className="pt-2 border-t border-slate-100">
+                    <ReportIssueButton isCollapsed={isCollapsed} />
+                </div>
             </div>
 
             {/* User Profile & Footer */}
@@ -175,9 +179,15 @@ export function Sidebar() {
                 {!isCollapsed && (
                     <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-2">
                         <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-50 to-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200">
-                                {session?.user?.name?.[0] || 'U'}
-                            </div>
+                            {session?.user?.image ? (
+                                <div className="w-10 h-10 rounded-full overflow-hidden border border-slate-200 shadow-sm relative shrink-0">
+                                    <Image src={session.user.image} alt={session.user.name || "User"} fill className="object-cover" />
+                                </div>
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-50 to-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200 shrink-0">
+                                    {session?.user?.name?.[0] || 'U'}
+                                </div>
+                            )}
                             <div className="flex flex-col min-w-0">
                                 <span className="text-sm font-bold truncate text-slate-900 leading-tight">{session?.user?.name}</span>
                                 <span className="text-[10px] font-semibold text-blue-600 translate-y-0.5">

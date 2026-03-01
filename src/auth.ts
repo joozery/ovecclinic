@@ -84,7 +84,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     user.isProfileComplete = existingUser.isProfileComplete;
                     user.id = existingUser._id.toString();
                     user.email = existingUser.email;
-                    user.position = existingUser.profile?.position;
+                    (user as any).position = existingUser.profile?.position;
+
+                    if (existingUser.image) {
+                        user.image = existingUser.image;
+                    }
 
                     // If user was found by email but didn't have this provider account linked, add it
                     const hasProvider = existingUser.providerAccounts.some(
@@ -107,11 +111,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             // But also add DB lookup capability if needed (though avoiding DB in JWT callback is faster)
 
             if (trigger === "update" && session) {
-                // Handle both { user: { ... } } and direct { ... } updates
+                // Handle both { user: { ... } } and direct { ... } updates so image is synced
                 if (session.user) {
-                    token = { ...token, ...session.user }
+                    token = { ...token, ...session.user };
+                    if (session.user.image) token.picture = session.user.image;
                 } else {
-                    token = { ...token, ...session }
+                    token = { ...token, ...session };
+                    if (session.image) token.picture = session.image;
                 }
             }
 
@@ -120,6 +126,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 token.role = user.role;
                 token.isProfileComplete = user.isProfileComplete;
                 token.position = (user as any).position;
+                // Map user.image → token.picture so session callback can read it
+                if (user.image) token.picture = user.image;
             }
             return token;
         },

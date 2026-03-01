@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { RegisterButton } from "@/components/activity/register-button";
+import { ActivityActionButtons } from "@/components/activity/activity-action-buttons";
 import { Navbar } from "@/components/home/navbar";
 import { Footer } from "@/components/home/footer";
 
@@ -236,14 +237,10 @@ export default async function ActivityDetailPage({
                                         </Link>
                                     )}
 
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <Button variant="outline" className="h-10 rounded-xl font-bold text-xs gap-2 border-slate-100">
-                                            <Bell className="w-3.5 h-3.5" /> แจ้งเตือน
-                                        </Button>
-                                        <Button variant="outline" className="h-10 rounded-xl font-bold text-xs gap-2 border-slate-100">
-                                            <Share2 className="w-3.5 h-3.5" /> แชร์
-                                        </Button>
-                                    </div>
+                                    <ActivityActionButtons
+                                        activityId={activity._id}
+                                        activityTitle={activity.title}
+                                    />
                                 </div>
 
                                 <div className="mt-8 pt-8 border-t border-slate-50 space-y-4">

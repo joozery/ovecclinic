@@ -6,6 +6,7 @@ import { auth } from "@/auth";
 import { redirect, notFound } from "next/navigation";
 import Activity from "@/models/Activity";
 import dbConnect from "@/lib/db";
+import { Suspense } from "react";
 
 export default async function EditActivityPage({
     params,
@@ -45,11 +46,13 @@ export default async function EditActivityPage({
             </div>
 
             <div className="bg-white p-8 md:p-10 rounded-[2rem] border border-slate-100 shadow-sm">
-                <ActivityForm
-                    initialData={initialData}
-                    activityId={id}
-                    onSuccessRedirect="/activities/manage"
-                />
+                <Suspense fallback={<div>กำลังโหลด...</div>}>
+                    <ActivityForm
+                        initialData={initialData}
+                        activityId={id}
+                        onSuccessRedirect="/activities/manage"
+                    />
+                </Suspense>
             </div>
         </div>
     );

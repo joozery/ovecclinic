@@ -61,13 +61,28 @@ export async function getSubmission(registrationId: string) {
     return JSON.parse(JSON.stringify(submission));
 }
 
+export async function getMySubmissions(registrationIds: string[]) {
+    const session = await auth();
+    if (!session) return {};
+
+    await dbConnect();
+    const submissions = await Submission.find({ registrationId: { $in: registrationIds } })
+        .select('registrationId status feedback submittedAt reviewedAt');
+
+    const map: Record<string, any> = {};
+    for (const s of submissions) {
+        map[s.registrationId.toString()] = JSON.parse(JSON.stringify(s));
+    }
+    return map;
+}
+
 // Supervisor Actions
 
 export async function getAssignedSubmissions() {
     const session = await auth();
     // In a real app, supervisors might be assigned specific activities.
     // For now, supervisors see ALL "Pending" or "In Review" submissions.
-    if (!session || (session.user.role !== 'supervisor' && session.user.role !== 'super_admin')) {
+    if (!session || (session.user.role !== 'supervisor' && session.user.role !== 'super_admin' && session.user.role !== 'admin')) {
         return [];
     }
 
@@ -84,13 +99,14 @@ export async function getAssignedSubmissions() {
 
 export async function reviewSubmission(submissionId: string, status: string, feedback: string) {
     const session = await auth();
-    if (!session || (session.user.role !== 'supervisor' && session.user.role !== 'super_admin')) {
+    if (!session || (session.user.role !== 'supervisor' && session.user.role !== 'super_admin' && session.user.role !== 'admin')) {
         throw new Error("Unauthorized");
     }
 
     await dbConnect();
 
-    const submission = await Submission.findById(submissionId);
+    // Populate activityId เพื่อดึงชื่อกิจกรรมสำหรับการแจ้งเตือน
+    const submission = await Submission.findById(submissionId).populate('activityId', 'title');
     if (!submission) {
         throw new Error("Submission not found");
     }
@@ -101,23 +117,39 @@ export async function reviewSubmission(submissionId: string, status: string, fee
     submission.reviewedAt = new Date();
     await submission.save();
 
-    // Trigger Notification
+    // แจ้งเตือนภาษาไทย พร้อมชื่อกิจกรรมและข้อเสนอแนะ
     if (status !== 'Pending') {
-        const title = `Submission ${status}`;
-        const message = `Your submission for "${submission.activityId?.title}" has been marked as ${status}. ${feedback ? `Feedback: ${feedback}` : ''}`;
-        const link = `/my-activities/${submission.registrationId}/submit`; // Direct to submission page to see feedback
+        const activityTitle = (submission.activityId as any)?.title || 'กิจกรรม';
 
-        await createNotification(submission.userId, title, message, status === 'Approved' ? 'success' : status === 'Rejected' ? 'error' : 'warning', link);
+        const titleMap: Record<string, string> = {
+            Approved: '✅ ผลงานได้รับการอนุมัติ',
+            Rejected: '❌ ผลงานไม่ผ่านการประเมิน',
+            'Request Changes': '🔄 ขอแก้ไขเพิ่มเติม',
+        };
+        const thaiTitle = titleMap[status] || `ผลการตรวจประเมิน`;
+
+        const lines = [
+            `ผลงานที่คุณส่งในกิจกรรม "${activityTitle}" ได้รับการตรวจประเมินแล้ว`,
+            status === 'Approved' ? 'ผลงานผ่านการประเมิน สามารถดาวน์โหลดวุฒิบัตรได้ในหน้า "วุฒิบัตรของฉัน"' : '',
+            status === 'Rejected' ? 'ผลงานไม่ผ่านการประเมินในครั้งนี้' : '',
+            status === 'Request Changes' ? 'กรุณาแก้ไขและส่งผลงานใหม่อีกครั้ง' : '',
+            feedback ? `\nหมายเหตุจากผู้นิเทศ: ${feedback}` : '',
+        ].filter(Boolean).join(' ');
+
+        const notifType = status === 'Approved' ? 'success' : status === 'Rejected' ? 'error' : 'warning';
+        const link = `/my-activities/${submission.registrationId}/submit`;
+
+        await createNotification(submission.userId, thaiTitle, lines, notifType, link);
     }
 
     revalidatePath("/supervision");
-    revalidatePath(`/my-activities/${submission.registrationId}`); // Refresh teacher view
+    revalidatePath(`/my-activities/${submission.registrationId}`);
     return { success: true };
 }
 
 export async function getSubmissionById(submissionId: string) {
     const session = await auth();
-    if (!session || (session.user.role !== 'supervisor' && session.user.role !== 'super_admin')) {
+    if (!session || (session.user.role !== 'supervisor' && session.user.role !== 'super_admin' && session.user.role !== 'admin')) {
         return null;
     }
 
