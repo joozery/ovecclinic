@@ -29,7 +29,40 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Phone, School, UserCircle, MapPinned, Building2, Loader2, GraduationCap, IdCard, Camera } from "lucide-react";
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/components/ui/command";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { Phone, School, UserCircle, MapPinned, Building2, Loader2, GraduationCap, IdCard, Camera, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const provinces = [
+    "กระบี่", "กรุงเทพมหานคร", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร",
+    "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท",
+    "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง",
+    "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม",
+    "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส",
+    "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์",
+    "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา",
+    "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์",
+    "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน",
+    "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง",
+    "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย",
+    "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ",
+    "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี",
+    "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย",
+    "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์",
+    "อุทัยธานี", "อุบลราชธานี"
+];
 
 const formSchema = z.object({
     name: z.string().min(2, "กรุณากรอกชื่อ-นามสกุลจริง"),
@@ -277,11 +310,61 @@ export function OnboardingForm() {
                                         control={form.control}
                                         name="province"
                                         render={({ field }) => (
-                                            <FormItem className="space-y-1.5">
+                                            <FormItem className="space-y-1.5 flex flex-col pt-1">
                                                 <FormLabel className="text-slate-500 font-medium text-[11px] ml-1">จังหวัด</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="กรอกจังหวัด" {...field} className="h-11 px-4 rounded-xl border-none bg-[#f1f5fa] focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold text-[13px]" />
-                                                </FormControl>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <FormControl>
+                                                            <Button
+                                                                variant="outline"
+                                                                role="combobox"
+                                                                className={cn(
+                                                                    "h-11 px-4 rounded-xl border-none bg-[#f1f5fa] hover:bg-[#e4ebf5] focus:ring-2 focus:ring-blue-100 transition-all text-[13px] justify-between",
+                                                                    !field.value && "text-slate-500 font-normal",
+                                                                    field.value && "text-slate-900 font-bold"
+                                                                )}
+                                                            >
+                                                                {field.value
+                                                                    ? provinces.find(
+                                                                        (province) => province === field.value
+                                                                    )
+                                                                    : "เลือกจังหวัด"}
+                                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                            </Button>
+                                                        </FormControl>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-[200px] p-0 rounded-xl shadow-xl border-slate-100">
+                                                        <Command>
+                                                            <CommandInput placeholder="ค้นหาจังหวัด..." className="text-[13px]" />
+                                                            <CommandList className="max-h-[220px]">
+                                                                <CommandEmpty className="text-[13px] py-6 text-center text-slate-500">ไม่พบจังหวัดที่ค้นหา</CommandEmpty>
+                                                                <CommandGroup>
+                                                                    {provinces.map((province) => (
+                                                                        <CommandItem
+                                                                            value={province}
+                                                                            key={province}
+                                                                            onSelect={() => {
+                                                                                form.setValue("province", province);
+                                                                                // Optional: also automatically set region if needed based on province
+                                                                            }}
+                                                                            className="cursor-pointer text-[13px] font-medium"
+                                                                        >
+                                                                            <Check
+                                                                                className={cn(
+                                                                                    "mr-2 h-4 w-4",
+                                                                                    province === field.value
+                                                                                        ? "opacity-100 text-[#1a237e]"
+                                                                                        : "opacity-0"
+                                                                                )}
+                                                                            />
+                                                                            {province}
+                                                                        </CommandItem>
+                                                                    ))}
+                                                                </CommandGroup>
+                                                            </CommandList>
+                                                        </Command>
+                                                    </PopoverContent>
+                                                </Popover>
                                                 <FormMessage className="text-[10px] font-bold" />
                                             </FormItem>
                                         )}
