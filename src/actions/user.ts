@@ -19,28 +19,49 @@ export async function updateProfile(formData: FormData) {
     const region = formData.get("region") as string;
     const affiliation = formData.get("affiliation") as string;
     const academicStanding = formData.get("academicStanding") as string;
+    const idCard = formData.get("idCard") as string;
+    const province = formData.get("province") as string;
+    const image = formData.get("image") as string;
 
     await dbConnect();
+
+    // Check if ID Card exists in another user
+    if (idCard) {
+        const existingUserWithIdCard = await User.findOne({ idCard });
+        if (existingUserWithIdCard && existingUserWithIdCard._id.toString() !== session.user.id) {
+            // Found a duplicate! Provide a specific error message.
+            const providerAccounts = existingUserWithIdCard.providerAccounts || [];
+            const linkedProviders = providerAccounts.map((pa: any) => pa.provider).join(", ");
+            const providerMsg = linkedProviders ? `ด้วยบัญชี ${linkedProviders}` : `ด้วยอีเมล ${existingUserWithIdCard.email}`;
+
+            return {
+                error: `เลขบัตรประชาชนนี้เคยลงทะเบียนไว้แล้ว ${providerMsg} กรุณาเข้าสู่ระบบด้วยช่องทางเดิม`
+            };
+        }
+    }
 
     // Find the user first to check if profile was already complete
     const user = await User.findById(session.user.id);
     const wasAlreadyComplete = user?.isProfileComplete;
 
-    await User.findByIdAndUpdate(
-        session.user.id,
-        {
-            name,
-            profile: {
-                phone,
-                college,
-                position,
-                region,
-                affiliation,
-                academicStanding,
-            },
-            isProfileComplete: true,
-        }
-    );
+    const updateData: any = {
+        name,
+        profile: {
+            phone,
+            college,
+            position,
+            region,
+            province,
+            affiliation,
+            academicStanding,
+        },
+        isProfileComplete: true,
+    };
+
+    if (idCard) updateData.idCard = idCard;
+    if (image) updateData.image = image;
+
+    await User.findByIdAndUpdate(session.user.id, updateData);
 
     // If this is the first time they complete their profile (Welcome them!)
     if (!wasAlreadyComplete && user?.email) {

@@ -16,10 +16,12 @@ const UserSchema = new mongoose.Schema({
         provider: { type: String, required: true },
         providerAccountId: { type: String, required: true },
     }],
+    idCard: { type: String, unique: true, sparse: true },
     profile: {
         phone: String,
         college: String,
         position: String,
+        province: String,
         region: {
             type: String,
             enum: ['North', 'South', 'Central', 'Northeast', 'East_Bangkok'],

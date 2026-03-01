@@ -4,14 +4,26 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, MapPin, Clock } fr
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { getPublicActivities } from "@/actions/public";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday, addMonths, subMonths } from "date-fns";
 import { th } from "date-fns/locale";
 import Link from "next/link";
 
 export function CalendarSection() {
     const [activities, setActivities] = useState<any[]>([]);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+
     const days = ["อา", "จ", "อ", "พ", "พฤ", "ศ", "ส"];
-    const calendarDays = Array.from({ length: 28 }, (_, i) => i + 1);
+
+    // Calendar calculation
+    const startDate = startOfWeek(startOfMonth(currentMonth));
+    const endDate = endOfWeek(endOfMonth(currentMonth));
+    const calendarDays = eachDayOfInterval({ start: startDate, end: endDate });
+
+    const currentMonthActivities = activities.filter(a => isSameMonth(new Date(a.startTime), currentMonth));
+
+    const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
+    const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
+    const goToToday = () => setCurrentMonth(new Date());
 
     useEffect(() => {
         async function fetchActivities() {
@@ -46,13 +58,15 @@ export function CalendarSection() {
                             </div>
 
                             <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl">
-                                <Button variant="ghost" className="h-8 px-3 rounded-lg text-xs font-bold bg-white shadow-sm">วันนี้</Button>
+                                <Button variant="ghost" onClick={goToToday} className="h-8 px-3 rounded-lg text-xs font-bold bg-white shadow-sm hover:bg-slate-50">วันนี้</Button>
                                 <div className="flex items-center gap-1">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white">
+                                    <Button variant="ghost" size="icon" onClick={prevMonth} className="h-8 w-8 rounded-lg hover:bg-white text-slate-600">
                                         <ChevronLeft className="w-4 h-4" />
                                     </Button>
-                                    <span className="text-xs font-black text-slate-700 mx-1 whitespace-nowrap">กุมภาพันธ์ 2569</span>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white">
+                                    <span className="text-xs font-black text-slate-700 mx-1 whitespace-nowrap">
+                                        {format(currentMonth, "MMMM ", { locale: th })}{currentMonth.getFullYear() + 543}
+                                    </span>
+                                    <Button variant="ghost" size="icon" onClick={nextMonth} className="h-8 w-8 rounded-lg hover:bg-white text-slate-600">
                                         <ChevronRight className="w-4 h-4" />
                                     </Button>
                                 </div>
@@ -68,23 +82,35 @@ export function CalendarSection() {
                         </div>
 
                         <div className="grid grid-cols-7 gap-px bg-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
-                            {calendarDays.map((day) => (
-                                <div key={day} className="bg-white aspect-square p-2 hover:bg-slate-50 transition-colors group relative cursor-pointer">
-                                    <span className={`text-xs font-bold ${[1, 8, 15, 22].includes(day) ? "text-red-500" : "text-slate-600"}`}>
-                                        {day}
-                                    </span>
-                                    {day === 24 && (
-                                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-[#1a237e] rounded-full flex items-center justify-center shadow-md">
-                                            <span className="text-white text-[10px] font-bold">24</span>
-                                        </div>
-                                    )}
-                                    {activities.some(a => new Date(a.startTime).getDate() === day) && (
-                                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-0.5">
-                                            <div className="w-1 h-1 bg-emerald-500 rounded-full"></div>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
+                            {calendarDays.map((date, idx) => {
+                                const isCurrentMonthDate = isSameMonth(date, currentMonth);
+                                const isDateToday = isToday(date);
+                                const dateActivities = activities.filter(a => isSameDay(new Date(a.startTime), date));
+                                const isSunday = date.getDay() === 0;
+
+                                return (
+                                    <div key={idx} className={`bg-white aspect-square p-2 hover:bg-slate-50 transition-colors group relative cursor-pointer ${!isCurrentMonthDate ? "opacity-40" : ""}`}>
+                                        <span className={`text-xs font-bold ${isSunday ? "text-red-500" : "text-slate-600"} ${isDateToday && !isSunday ? "text-[#1a237e]" : ""}`}>
+                                            {format(date, "d")}
+                                        </span>
+                                        {isDateToday && (
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-[#1a237e] rounded-full flex items-center justify-center shadow-md">
+                                                <span className="text-white text-[10px] font-bold">{format(date, "d")}</span>
+                                            </div>
+                                        )}
+                                        {dateActivities.length > 0 && (
+                                            <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-0.5">
+                                                {dateActivities.slice(0, 3).map((act, dotIdx) => (
+                                                    <div key={dotIdx} className={`w-1 h-1 rounded-full ${act.status === 'Full' ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
+                                                ))}
+                                                {dateActivities.length > 3 && (
+                                                    <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
 
                         <div className="mt-6 flex flex-wrap gap-4 border-t border-slate-50 pt-6">
@@ -106,20 +132,22 @@ export function CalendarSection() {
                     {/* Events List Side */}
                     <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/30 p-6 flex flex-col h-full">
                         <div className="flex items-center justify-between mb-6 bg-white p-3 rounded-xl shadow-sm border border-slate-100">
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg bg-indigo-50 text-[#1a237e]">
+                            <Button variant="ghost" size="icon" onClick={prevMonth} className="h-8 w-8 rounded-lg bg-indigo-50 text-[#1a237e]">
                                 <ChevronLeft className="w-4 h-4" />
                             </Button>
                             <div className="flex items-center gap-2 text-slate-900">
-                                <span className="text-sm font-black">กุมภาพันธ์ 2569</span>
+                                <span className="text-sm font-black">
+                                    {format(currentMonth, "MMMM ", { locale: th })}{currentMonth.getFullYear() + 543}
+                                </span>
                             </div>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-slate-100">
+                            <Button variant="ghost" size="icon" onClick={nextMonth} className="h-8 w-8 rounded-lg hover:bg-slate-100 text-[#1a237e]">
                                 <ChevronRight className="w-4 h-4" />
                             </Button>
                         </div>
 
                         <div className="space-y-3 overflow-y-auto max-h-[400px] pr-1 custom-scrollbar">
-                            {activities.length > 0 ? (
-                                activities.map((activity, i) => (
+                            {currentMonthActivities.length > 0 ? (
+                                currentMonthActivities.map((activity, i) => (
                                     <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all group cursor-pointer">
                                         <div className="flex items-center justify-between mb-2">
                                             <div className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">
