@@ -74,7 +74,12 @@ export async function Footer() {
                     </div>
                 </div>
 
-                <div className="pt-8 border-t border-slate-800/50 text-center">
+                <div className="pt-8 border-t border-slate-800/50 text-center space-y-4">
+                    <div className="flex flex-wrap justify-center gap-6">
+                        <Link href="/privacy" className="text-xs font-bold text-slate-500 hover:text-blue-400 transition-colors">
+                            นโยบายการคุ้มครองข้อมูลส่วนบุคคล
+                        </Link>
+                    </div>
                     <p className="text-xs font-medium text-slate-500">
                         {footer.copyright}
                     </p>

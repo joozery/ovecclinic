@@ -175,9 +175,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 if (session.user) {
                     token = { ...token, ...session.user };
                     if (session.user.image) token.picture = session.user.image;
+                    if (session.user.image) (token as any).image = session.user.image;
                 } else {
                     token = { ...token, ...session };
                     if (session.image) token.picture = session.image;
+                    if (session.image) (token as any).image = session.image;
                 }
             }
 
@@ -185,16 +187,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 token.id = user.id;
                 token.role = user.role;
                 token.isProfileComplete = user.isProfileComplete;
-                token.idCard = (user as any).idCard;
-                token.firstNameTH = (user as any).firstNameTH;
-                token.lastNameTH = (user as any).lastNameTH;
-                token.firstNameEN = (user as any).firstNameEN;
-                token.lastNameEN = (user as any).lastNameEN;
-                token.prefixTH = (user as any).prefixTH;
-                token.prefixEN = (user as any).prefixEN;
-                token.birthdate = (user as any).birthdate;
-                token.position = (user as any).position;
+                (token as any).idCard = (user as any).idCard;
+                (token as any).firstNameTH = (user as any).firstNameTH;
+                (token as any).lastNameTH = (user as any).lastNameTH;
+                (token as any).firstNameEN = (user as any).firstNameEN;
+                (token as any).lastNameEN = (user as any).lastNameEN;
+                (token as any).prefixTH = (user as any).prefixTH;
+                (token as any).prefixEN = (user as any).prefixEN;
+                (token as any).birthdate = (user as any).birthdate;
+                (token as any).position = (user as any).position;
                 if (user.image) token.picture = user.image;
+                if (user.image) (token as any).image = user.image;
             }
             return token;
         },

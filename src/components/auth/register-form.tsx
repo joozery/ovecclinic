@@ -119,6 +119,9 @@ export function RegisterForm() {
     // Consent State
     const [isConsent, setIsConsent] = useState(false);
 
+    // Success State
+    const [isSuccess, setIsSuccess] = useState(false);
+
     const form = useForm<z.infer<typeof registerSchema>>({
         resolver: zodResolver(registerSchema),
         defaultValues: {
@@ -268,26 +271,43 @@ export function RegisterForm() {
 
                 const result = await updateProfile(formData);
                 if (result.success) {
-                    toast.success("บันทึกข้อมูลสำเร็จ");
-                    await updateSession();
-                    window.location.href = "/dashboard";
+                    setIsSuccess(true);
+                    // Force session update with profile status
+                    await updateSession({
+                        user: {
+                            ...session?.user,
+                            isProfileComplete: true
+                        }
+                    });
+                    setTimeout(() => {
+                        window.location.href = "/dashboard";
+                    }, 2000);
                 } else {
                     toast.error(result.error);
                 }
             } else {
                 const result = await register({ ...pendingValues, image: imageUrl });
                 if (result.success) {
-                    toast.success("ลงทะเบียนสำเร็จ กำลังเข้าสู่ระบบ...");
                     const loginResult = await signIn("credentials", {
                         email: pendingValues.email,
                         password: pendingValues.password,
                         redirect: false,
                     });
+
                     if (loginResult?.error) {
                         toast.error("ลงทะเบียนสำเร็จแล้ว กรุณาเข้าสู่ระบบด้วยตนเอง");
                         router.push("/login");
                     } else {
-                        window.location.href = "/dashboard";
+                        setIsSuccess(true);
+                        // Force session update with profile status
+                        await updateSession({
+                            user: {
+                                isProfileComplete: true
+                            }
+                        });
+                        setTimeout(() => {
+                            window.location.href = "/dashboard";
+                        }, 2000);
                     }
                 } else if (result.error) {
                     toast.error(result.error);
@@ -307,415 +327,510 @@ export function RegisterForm() {
 
     return (
         <>
-            <Card className="border-none bg-white shadow-[0_8px_40px_rgba(0,0,0,0.06)] rounded-2xl overflow-hidden max-w-7xl mx-auto transition-all duration-300">
-                <div className="text-center py-10 border-b border-slate-50 bg-slate-50/30 relative">
-                    <div
-                        className="mx-auto w-28 h-28 bg-white rounded-full flex flex-col items-center justify-center mb-6 border-2 border-dashed border-blue-200 cursor-pointer hover:bg-blue-50 transition relative overflow-hidden group shadow-sm"
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        {imageUrl ? (
-                            <>
-                                <Image src={imageUrl!} alt="Profile" fill className="object-cover" />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Camera className="w-6 h-6 text-white" />
+            {isSuccess ? (
+                <Card className="border-none shadow-[0_20px_60px_rgba(0,0,0,0.1)] rounded-[3rem] overflow-hidden bg-white max-w-2xl mx-auto mt-20">
+                    <CardContent className="p-16 text-center space-y-8">
+                        <div className="mx-auto w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center animate-bounce">
+                            <Check className="w-12 h-12 text-emerald-600" />
+                        </div>
+                        <div className="space-y-4">
+                            <h2 className="text-4xl font-black text-slate-800">ลงทะเบียนสำเร็จสมบูรณ์!</h2>
+                            <p className="text-xl text-slate-500 font-medium">
+                                ยินดีต้อนรับเข้าสูระบบ OVEC Supervise Clinic<br />
+                                ระบบกำลังนำท่านเข้าสู่หน้า Dashboard...
+                            </p>
+                        </div>
+                        <div className="flex justify-center">
+                            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                        </div>
+                    </CardContent>
+                </Card>
+            ) : (
+                <Card className="border-none bg-white shadow-[0_8px_40px_rgba(0,0,0,0.06)] rounded-2xl overflow-hidden max-w-7xl mx-auto transition-all duration-300">
+                    <div className="text-center py-10 border-b border-slate-50 bg-slate-50/30 relative">
+                        <div
+                            className="mx-auto w-28 h-28 bg-white rounded-full flex flex-col items-center justify-center mb-6 border-2 border-dashed border-blue-200 cursor-pointer hover:bg-blue-50 transition relative overflow-hidden group shadow-sm"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            {imageUrl ? (
+                                <>
+                                    <Image src={imageUrl!} alt="Profile" fill className="object-cover" />
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Camera className="w-6 h-6 text-white" />
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    {isUploading ? (
+                                        <Loader2 className="w-8 h-8 text-[#1a237e] animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Camera className="w-10 h-10 text-[#1a237e] mb-1 group-hover:scale-110 transition" />
+                                            <span className="text-[11px] font-black text-blue-600">รูปภาพโปรไฟล์</span>
+                                        </>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            ref={fileInputRef}
+                            onChange={handleImageUpload}
+                            disabled={isUploading}
+                        />
+
+                        <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">
+                            {isSocialLogin ? "ตั้งค่าระบบและสรุปข้อมูล" : "ลงทะเบียนสมัครสมาชิก"}
+                        </h1>
+                        <p className="text-slate-400 font-medium">
+                            {isSocialLogin
+                                ? "กรุณากรอกข้อมูลเพิ่มเติมให้ครบถ้วนเพื่อเริ่มต้นใช้งานระบบ"
+                                : "กรุณากรอกข้อมูลให้ครบถ้วนเพื่อรับสิทธิประโยชน์และการรับรองผลนิเทศทางอิเล็กทรอนิกส์"}
+                        </p>
+
+                        {!isSocialLogin && (
+                            <div className="mt-8 px-8">
+                                <div className="flex flex-col items-start gap-3">
+                                    <span className="text-sm font-black text-slate-800 ml-1">ดึงข้อมูลจาก</span>
+                                    <Button
+                                        type="button"
+                                        onClick={handleThaiDClick}
+                                        disabled={isPulling}
+                                        className="bg-[#0b0c5f] hover:bg-[#07083f] h-12 px-10 rounded-xl transition-all shadow-md group active:scale-95 disabled:opacity-70"
+                                    >
+                                        {isPulling ? (
+                                            <Loader2 className="w-5 h-5 animate-spin text-white" />
+                                        ) : (
+                                            <span className="font-bold flex items-center gap-2">
+                                                <span className="text-white">Thai</span>
+                                                <span className="text-orange-400">ID</span>
+                                            </span>
+                                        )}
+                                    </Button>
                                 </div>
-                            </>
-                        ) : (
-                            <>
-                                {isUploading ? (
-                                    <Loader2 className="w-8 h-8 text-[#1a237e] animate-spin" />
-                                ) : (
-                                    <>
-                                        <Camera className="w-10 h-10 text-[#1a237e] mb-1 group-hover:scale-110 transition" />
-                                        <span className="text-[11px] font-black text-blue-600">รูปภาพโปรไฟล์</span>
-                                    </>
-                                )}
-                            </>
+                            </div>
                         )}
                     </div>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        ref={fileInputRef}
-                        onChange={handleImageUpload}
-                        disabled={isUploading}
-                    />
 
-                    <h1 className="text-3xl font-black text-slate-800 tracking-tight mb-2">
-                        {isSocialLogin ? "ตั้งค่าระบบและสรุปข้อมูล" : "ลงทะเบียนสมัครสมาชิก"}
-                    </h1>
-                    <p className="text-slate-400 font-medium">
-                        {isSocialLogin
-                            ? "กรุณากรอกข้อมูลเพิ่มเติมให้ครบถ้วนเพื่อเริ่มต้นใช้งานระบบ"
-                            : "กรุณากรอกข้อมูลให้ครบถ้วนเพื่อรับสิทธิประโยชน์และการรับรองผลนิเทศทางอิเล็กทรอนิกส์"}
-                    </p>
+                    <CardContent className="p-10">
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
 
-                    {!isSocialLogin && (
-                        <div className="mt-8 px-8">
-                            <div className="flex flex-col items-start gap-3">
-                                <span className="text-sm font-black text-slate-800 ml-1">ดึงข้อมูลจาก</span>
-                                <Button
-                                    type="button"
-                                    onClick={handleThaiDClick}
-                                    disabled={isPulling}
-                                    className="bg-[#0b0c5f] hover:bg-[#07083f] h-12 px-10 rounded-xl transition-all shadow-md group active:scale-95 disabled:opacity-70"
-                                >
-                                    {isPulling ? (
-                                        <Loader2 className="w-5 h-5 animate-spin text-white" />
-                                    ) : (
-                                        <span className="font-bold flex items-center gap-2">
-                                            <span className="text-white">Thai</span>
-                                            <span className="text-orange-400">ID</span>
-                                        </span>
-                                    )}
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <CardContent className="p-10">
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
-
-                            {/* Section 1: Identity & Credentials */}
-                            <div className="space-y-8">
-                                <div className="flex items-center gap-2 border-l-4 border-blue-600 pl-4 py-1">
-                                    <ShieldCheck className="w-6 h-6 text-blue-600" />
-                                    <h3 className="text-xl font-black text-slate-800">ข้อมูลยืนยันตัวตนและบัญชี</h3>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <FormField
-                                        control={form.control}
-                                        name="email"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                                <FormLabel className="text-slate-800 font-black text-sm">อีเมล <span className="text-red-500">*</span></FormLabel>
-                                                <FormControl>
-                                                    <div className="relative group">
-                                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                            <Mail className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                                                        </div>
-                                                        <Input placeholder="name@example.com" {...field} className="h-12 pl-12 pr-4 rounded-xl border-slate-200 bg-white text-slate-900 font-black focus:border-blue-500 focus:ring-blue-500/10 transition-all" />
-                                                    </div>
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="idCard"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                                <FormLabel className="text-slate-800 font-black text-sm">หมายเลขบัตรประชาชน <span className="text-red-500">*</span></FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        placeholder="_-____-_____-__-_"
-                                                        {...field}
-                                                        maxLength={13}
-                                                        className="h-12 px-5 rounded-xl border-slate-200 bg-white focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-black placeholder:text-slate-300"
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                {!isSocialLogin && (
-                                    <>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                            <FormField
-                                                control={form.control}
-                                                name="password"
-                                                render={({ field }) => (
-                                                    <FormItem className="space-y-3">
-                                                        <FormLabel className="text-slate-800 font-black text-sm">รหัสผ่าน <span className="text-red-500">*</span></FormLabel>
-                                                        <FormControl>
-                                                            <div className="relative group">
-                                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                                    <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                                                                </div>
-                                                                <Input type={showPassword ? "text" : "password"} {...field} className="h-12 pl-12 pr-12 rounded-xl border-slate-200 bg-white text-slate-900 font-black focus:border-blue-500 focus:ring-blue-500/10 transition-all" />
-                                                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-blue-500 transition-colors">
-                                                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                                                </button>
-                                                            </div>
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="confirmPassword"
-                                                render={({ field }) => (
-                                                    <FormItem className="space-y-3">
-                                                        <FormLabel className="text-slate-800 font-black text-sm">ยืนยันรหัสผ่าน <span className="text-red-500">*</span></FormLabel>
-                                                        <FormControl>
-                                                            <div className="relative group">
-                                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                                    <ShieldCheck className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                                                                </div>
-                                                                <Input type={showPassword ? "text" : "password"} {...field} className="h-12 pl-12 pr-4 rounded-xl border-slate-200 bg-white text-slate-900 font-black focus:border-blue-500 focus:ring-blue-500/10 transition-all" />
-                                                            </div>
-                                                        </FormControl>
-                                                        <FormMessage />
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                        <div className="flex justify-end p-1">
-                                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-xs font-black text-blue-600 hover:underline flex items-center gap-2">
-                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                                {showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่านสำหรับการสมัครนี้"}
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-
-                            {/* Section 2: Personal Names */}
-                            <div className="space-y-8">
-                                <div className="flex items-center gap-2 border-l-4 border-blue-600 pl-4 py-1">
-                                    <UserCircle className="w-6 h-6 text-blue-600" />
-                                    <h3 className="text-xl font-black text-slate-800">ข้อมูลชื่อ-นามสกุล</h3>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="prefixTH"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-2 md:col-span-2">
-                                                <FormLabel className="text-slate-600 font-bold text-xs">คำนำหน้าชื่อ (TH) <span className="text-red-500">*</span></FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold">
-                                                            <SelectValue placeholder="- เลือก -" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent className="rounded-xl shadow-xl">
-                                                        {prefixesTH.map(p => <SelectItem key={p} value={p} className="font-bold py-3">{p}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="firstNameTH"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-2 md:col-span-5">
-                                                <FormLabel className="text-slate-600 font-bold text-xs">ชื่อ (TH) <span className="text-red-500">*</span></FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="lastNameTH"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-2 md:col-span-5">
-                                                <FormLabel className="text-slate-600 font-bold text-xs">นามสกุล (TH) <span className="text-red-500">*</span></FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                                    <FormField
-                                        control={form.control}
-                                        name="prefixEN"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-2 md:col-span-2">
-                                                <FormLabel className="text-slate-600 font-bold text-xs">คำนำหน้าชื่อ (EN) <span className="text-red-500">*</span></FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold">
-                                                            <SelectValue placeholder="- เลือก -" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent className="rounded-xl shadow-xl">
-                                                        {prefixesEN.map(p => <SelectItem key={p} value={p} className="font-bold py-3">{p}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="firstNameEN"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-2 md:col-span-5">
-                                                <FormLabel className="text-slate-600 font-bold text-xs">ชื่อ (EN) <span className="text-red-500">*</span></FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="lastNameEN"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-2 md:col-span-5">
-                                                <FormLabel className="text-slate-600 font-bold text-xs">นามสกุล (EN) <span className="text-red-500">*</span></FormLabel>
-                                                <FormControl>
-                                                    <Input {...field} className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold" />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                    <div className="space-y-3">
-                                        <FormLabel className="text-slate-800 font-black text-sm">วัน/เดือน/ปีเกิด <span className="text-red-500">*</span></FormLabel>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            <FormField
-                                                control={form.control}
-                                                name="birthDay"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                                            <FormControl>
-                                                                <SelectTrigger className="h-12 rounded-xl bg-white border-slate-200 font-bold">
-                                                                    <SelectValue placeholder="วัน" />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent className="rounded-xl">{days.map(d => <SelectItem key={d} value={d} className="font-bold">{d}</SelectItem>)}</SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="birthMonth"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                                            <FormControl>
-                                                                <SelectTrigger className="h-12 rounded-xl bg-white border-slate-200 font-bold">
-                                                                    <SelectValue placeholder="เดือน" />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent className="rounded-xl">{months.map(m => <SelectItem key={m.value} value={m.value} className="font-bold">{m.label}</SelectItem>)}</SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="birthYear"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                                            <FormControl>
-                                                                <SelectTrigger className="h-12 rounded-xl bg-white border-slate-200 font-bold">
-                                                                    <SelectValue placeholder="ปี พ.ศ." />
-                                                                </SelectTrigger>
-                                                            </FormControl>
-                                                            <SelectContent className="rounded-xl scroll-auto max-h-[300px]">{years.map(y => <SelectItem key={y} value={y} className="font-bold">{y}</SelectItem>)}</SelectContent>
-                                                        </Select>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                        </div>
-                                        <FormMessage />
+                                {/* Section 1: Identity & Credentials */}
+                                <div className="space-y-8">
+                                    <div className="flex items-center gap-2 border-l-4 border-blue-600 pl-4 py-1">
+                                        <ShieldCheck className="w-6 h-6 text-blue-600" />
+                                        <h3 className="text-xl font-black text-slate-800">ข้อมูลยืนยันตัวตนและบัญชี</h3>
                                     </div>
 
-                                    <FormField
-                                        control={form.control}
-                                        name="phone"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                                <FormLabel className="text-slate-800 font-black text-sm">เบอร์โทรศัพท์มือถือ <span className="text-red-500">*</span></FormLabel>
-                                                <FormControl>
-                                                    <div className="relative group">
-                                                        <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                                                        <Input placeholder="08XXXXXXXX" {...field} className="h-12 pl-12 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-inner" />
-                                                    </div>
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Section 3: Professional Details */}
-                            <div className="space-y-8">
-                                <div className="flex items-center gap-2 border-l-4 border-blue-600 pl-4 py-1">
-                                    <School className="w-6 h-6 text-blue-600" />
-                                    <h3 className="text-xl font-black text-slate-800">ข้อมูลหน่วยงานสายงาน</h3>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <FormField
-                                        control={form.control}
-                                        name="college"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                                <FormLabel className="text-slate-800 font-black text-sm">ชื่อสถานศึกษา / หน่วยงานที่สังกัด <span className="text-red-500">*</span></FormLabel>
-                                                <FormControl>
-                                                    <div className="relative group">
-                                                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                                                        <Input placeholder="เช่น วิทยาลัยเทคนิค..." {...field} className="h-12 pl-12 rounded-xl border-slate-200 bg-white text-slate-900 font-bold" />
-                                                    </div>
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <FormField
                                             control={form.control}
-                                            name="province"
+                                            name="email"
                                             render={({ field }) => (
-                                                <FormItem className="space-y-3 flex flex-col pt-1">
-                                                    <FormLabel className="text-slate-800 font-black text-sm">จังหวัด</FormLabel>
-                                                    <Popover>
-                                                        <PopoverTrigger asChild>
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-slate-800 font-black text-sm">อีเมล <span className="text-red-500">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <div className="relative group">
+                                                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                                <Mail className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                                            </div>
+                                                            <Input placeholder="name@example.com" {...field} className="h-12 pl-12 pr-4 rounded-xl border-slate-200 bg-white text-slate-900 font-black focus:border-blue-500 focus:ring-blue-500/10 transition-all" />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="idCard"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-slate-800 font-black text-sm">หมายเลขบัตรประชาชน <span className="text-red-500">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="_-____-_____-__-_"
+                                                            {...field}
+                                                            maxLength={13}
+                                                            className="h-12 px-5 rounded-xl border-slate-200 bg-white focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-black placeholder:text-slate-300"
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    {!isSocialLogin && (
+                                        <>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="password"
+                                                    render={({ field }) => (
+                                                        <FormItem className="space-y-3">
+                                                            <FormLabel className="text-slate-800 font-black text-sm">รหัสผ่าน <span className="text-red-500">*</span></FormLabel>
                                                             <FormControl>
-                                                                <Button variant="outline" role="combobox" className={cn("h-12 px-4 rounded-xl border-slate-200 bg-white hover:bg-slate-50 transition-all text-sm justify-between shadow-sm", !field.value && "text-slate-400 font-medium", field.value && "text-slate-900 font-bold")}>
-                                                                    {field.value || "เลือกจังหวัด"}
-                                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                                </Button>
+                                                                <div className="relative group">
+                                                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                                        <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                                                    </div>
+                                                                    <Input type={showPassword ? "text" : "password"} {...field} className="h-12 pl-12 pr-12 rounded-xl border-slate-200 bg-white text-slate-900 font-black focus:border-blue-500 focus:ring-blue-500/10 transition-all" />
+                                                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-blue-500 transition-colors">
+                                                                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                                                    </button>
+                                                                </div>
                                                             </FormControl>
-                                                        </PopoverTrigger>
-                                                        <PopoverContent className="w-[240px] p-0 rounded-2xl shadow-2xl border-slate-100 outline-none">
-                                                            <Command>
-                                                                <CommandInput placeholder="ค้นหาจังหวัด..." className="text-sm font-bold" />
-                                                                <CommandList className="max-h-[300px] overflow-y-auto scrollbar-hide py-2">
-                                                                    <CommandEmpty className="text-sm py-8 text-center text-slate-400 font-bold">ไม่พบรายชื่อจังหวัด</CommandEmpty>
-                                                                    <CommandGroup>
-                                                                        {provinces.map((province) => (
-                                                                            <CommandItem value={province} key={province} onSelect={() => form.setValue("province", province)} className="cursor-pointer text-sm font-bold py-3 px-6 hover:bg-blue-50">
-                                                                                <Check className={cn("mr-3 h-4 w-4 text-blue-600", province === field.value ? "opacity-100" : "opacity-0")} />
-                                                                                {province}
-                                                                            </CommandItem>
-                                                                        ))}
-                                                                    </CommandGroup>
-                                                                </CommandList>
-                                                            </Command>
-                                                        </PopoverContent>
-                                                    </Popover>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="confirmPassword"
+                                                    render={({ field }) => (
+                                                        <FormItem className="space-y-3">
+                                                            <FormLabel className="text-slate-800 font-black text-sm">ยืนยันรหัสผ่าน <span className="text-red-500">*</span></FormLabel>
+                                                            <FormControl>
+                                                                <div className="relative group">
+                                                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                                        <ShieldCheck className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
+                                                                    </div>
+                                                                    <Input type={showPassword ? "text" : "password"} {...field} className="h-12 pl-12 pr-4 rounded-xl border-slate-200 bg-white text-slate-900 font-black focus:border-blue-500 focus:ring-blue-500/10 transition-all" />
+                                                                </div>
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                            <div className="flex justify-end p-1">
+                                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-xs font-black text-blue-600 hover:underline flex items-center gap-2">
+                                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                    {showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่านสำหรับการสมัครนี้"}
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Section 2: Personal Names */}
+                                <div className="space-y-8">
+                                    <div className="flex items-center gap-2 border-l-4 border-blue-600 pl-4 py-1">
+                                        <UserCircle className="w-6 h-6 text-blue-600" />
+                                        <h3 className="text-xl font-black text-slate-800">ข้อมูลชื่อ-นามสกุล</h3>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                                        <FormField
+                                            control={form.control}
+                                            name="prefixTH"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2 md:col-span-2">
+                                                    <FormLabel className="text-slate-600 font-bold text-xs">คำนำหน้าชื่อ (TH) <span className="text-red-500">*</span></FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold">
+                                                                <SelectValue placeholder="- เลือก -" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="rounded-xl shadow-xl">
+                                                            {prefixesTH.map(p => <SelectItem key={p} value={p} className="font-bold py-3">{p}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="firstNameTH"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2 md:col-span-5">
+                                                    <FormLabel className="text-slate-600 font-bold text-xs">ชื่อ (TH) <span className="text-red-500">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="lastNameTH"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2 md:col-span-5">
+                                                    <FormLabel className="text-slate-600 font-bold text-xs">นามสกุล (TH) <span className="text-red-500">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                                        <FormField
+                                            control={form.control}
+                                            name="prefixEN"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2 md:col-span-2">
+                                                    <FormLabel className="text-slate-600 font-bold text-xs">คำนำหน้าชื่อ (EN) <span className="text-red-500">*</span></FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold">
+                                                                <SelectValue placeholder="- เลือก -" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="rounded-xl shadow-xl">
+                                                            {prefixesEN.map(p => <SelectItem key={p} value={p} className="font-bold py-3">{p}</SelectItem>)}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="firstNameEN"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2 md:col-span-5">
+                                                    <FormLabel className="text-slate-600 font-bold text-xs">ชื่อ (EN) <span className="text-red-500">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name="lastNameEN"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-2 md:col-span-5">
+                                                    <FormLabel className="text-slate-600 font-bold text-xs">นามสกุล (EN) <span className="text-red-500">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <Input {...field} className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold" />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div className="space-y-3">
+                                            <FormLabel className="text-slate-800 font-black text-sm">วัน/เดือน/ปีเกิด <span className="text-red-500">*</span></FormLabel>
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="birthDay"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                                                <FormControl>
+                                                                    <SelectTrigger className="h-12 rounded-xl bg-white border-slate-200 font-bold">
+                                                                        <SelectValue placeholder="วัน" />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent className="rounded-xl">{days.map(d => <SelectItem key={d} value={d} className="font-bold">{d}</SelectItem>)}</SelectContent>
+                                                            </Select>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="birthMonth"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                                                <FormControl>
+                                                                    <SelectTrigger className="h-12 rounded-xl bg-white border-slate-200 font-bold">
+                                                                        <SelectValue placeholder="เดือน" />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent className="rounded-xl">{months.map(m => <SelectItem key={m.value} value={m.value} className="font-bold">{m.label}</SelectItem>)}</SelectContent>
+                                                            </Select>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="birthYear"
+                                                    render={({ field }) => (
+                                                        <FormItem>
+                                                            <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                                                <FormControl>
+                                                                    <SelectTrigger className="h-12 rounded-xl bg-white border-slate-200 font-bold">
+                                                                        <SelectValue placeholder="ปี พ.ศ." />
+                                                                    </SelectTrigger>
+                                                                </FormControl>
+                                                                <SelectContent className="rounded-xl scroll-auto max-h-[300px]">{years.map(y => <SelectItem key={y} value={y} className="font-bold">{y}</SelectItem>)}</SelectContent>
+                                                            </Select>
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                            <FormMessage />
+                                        </div>
+
+                                        <FormField
+                                            control={form.control}
+                                            name="phone"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-slate-800 font-black text-sm">เบอร์โทรศัพท์มือถือ <span className="text-red-500">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <div className="relative group">
+                                                            <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+                                                            <Input placeholder="08XXXXXXXX" {...field} className="h-12 pl-12 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-inner" />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Section 3: Professional Details */}
+                                <div className="space-y-8">
+                                    <div className="flex items-center gap-2 border-l-4 border-blue-600 pl-4 py-1">
+                                        <School className="w-6 h-6 text-blue-600" />
+                                        <h3 className="text-xl font-black text-slate-800">ข้อมูลหน่วยงานสายงาน</h3>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <FormField
+                                            control={form.control}
+                                            name="college"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-slate-800 font-black text-sm">ชื่อสถานศึกษา / หน่วยงานที่สังกัด <span className="text-red-500">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <div className="relative group">
+                                                            <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+                                                            <Input placeholder="เช่น วิทยาลัยเทคนิค..." {...field} className="h-12 pl-12 rounded-xl border-slate-200 bg-white text-slate-900 font-bold" />
+                                                        </div>
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="province"
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-3 flex flex-col pt-1">
+                                                        <FormLabel className="text-slate-800 font-black text-sm">จังหวัด</FormLabel>
+                                                        <Popover>
+                                                            <PopoverTrigger asChild>
+                                                                <FormControl>
+                                                                    <Button variant="outline" role="combobox" className={cn("h-12 px-4 rounded-xl border-slate-200 bg-white hover:bg-slate-50 transition-all text-sm justify-between shadow-sm", !field.value && "text-slate-400 font-medium", field.value && "text-slate-900 font-bold")}>
+                                                                        {field.value || "เลือกจังหวัด"}
+                                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                                    </Button>
+                                                                </FormControl>
+                                                            </PopoverTrigger>
+                                                            <PopoverContent className="w-[240px] p-0 rounded-2xl shadow-2xl border-slate-100 outline-none">
+                                                                <Command>
+                                                                    <CommandInput placeholder="ค้นหาจังหวัด..." className="text-sm font-bold" />
+                                                                    <CommandList className="max-h-[300px] overflow-y-auto scrollbar-hide py-2">
+                                                                        <CommandEmpty className="text-sm py-8 text-center text-slate-400 font-bold">ไม่พบรายชื่อจังหวัด</CommandEmpty>
+                                                                        <CommandGroup>
+                                                                            {provinces.map((province) => (
+                                                                                <CommandItem value={province} key={province} onSelect={() => form.setValue("province", province)} className="cursor-pointer text-sm font-bold py-3 px-6 hover:bg-blue-50">
+                                                                                    <Check className={cn("mr-3 h-4 w-4 text-blue-600", province === field.value ? "opacity-100" : "opacity-0")} />
+                                                                                    {province}
+                                                                                </CommandItem>
+                                                                            ))}
+                                                                        </CommandGroup>
+                                                                    </CommandList>
+                                                                </Command>
+                                                            </PopoverContent>
+                                                        </Popover>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+
+                                            <FormField
+                                                control={form.control}
+                                                name="region"
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-3">
+                                                        <FormLabel className="text-slate-800 font-black text-sm">ภาค</FormLabel>
+                                                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                                            <FormControl>
+                                                                <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold">
+                                                                    <SelectValue placeholder="เลือกภาค" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent className="rounded-xl shadow-xl border-none">
+                                                                <SelectItem value="North" className="font-bold py-3 px-4">เหนือ</SelectItem>
+                                                                <SelectItem value="South" className="font-bold py-3 px-4">ใต้</SelectItem>
+                                                                <SelectItem value="Central" className="font-bold py-3 px-4">กลาง</SelectItem>
+                                                                <SelectItem value="Northeast" className="font-bold py-3 px-4">ตะวันออกเฉียงเหนือ</SelectItem>
+                                                                <SelectItem value="East_Bangkok" className="font-bold py-3 px-4">ตะวันออกและกทม.</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <FormField
+                                            control={form.control}
+                                            name="teachingSubject"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-slate-800 font-black text-sm">วิชาที่สอน <span className="text-red-500">*</span></FormLabel>
+                                                    <FormControl>
+                                                        <Input
+                                                            placeholder="เช่น คอมพิวเตอร์ธุรกิจ, ภาษาอังกฤษ ฯลฯ"
+                                                            {...field}
+                                                            className="h-12 px-5 rounded-xl border-slate-200 bg-white focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold placeholder:text-slate-300 shadow-sm"
+                                                        />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <FormField
+                                            control={form.control}
+                                            name="position"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-slate-800 font-black text-sm">ตำแหน่ง <span className="text-red-500">*</span></FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-sm">
+                                                                <SelectValue placeholder="เลือกตำแหน่ง" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="rounded-xl shadow-xl border-none">
+                                                            <SelectItem value="ครูอัตราจ้าง" className="font-bold py-3 px-4">ครูอัตราจ้าง</SelectItem>
+                                                            <SelectItem value="พนักงานราชการ" className="font-bold py-3 px-4">พนักงานราชการ</SelectItem>
+                                                            <SelectItem value="ครูผู้ช่วย" className="font-bold py-3 px-4">ครูผู้ช่วย</SelectItem>
+                                                            <SelectItem value="ครู" className="font-bold py-3 px-4">ครู</SelectItem>
+                                                            <SelectItem value="รองผู้อำนวยการ" className="font-bold py-3 px-4">รองผอ.</SelectItem>
+                                                            <SelectItem value="ผู้อำนวยการ" className="font-bold py-3 px-4">ผอ.</SelectItem>
+                                                            <SelectItem value="ศึกษานิเทศก์" className="font-bold py-3 px-4">ศึกษานิเทศก์</SelectItem>
+                                                            <SelectItem value="อื่นๆ" className="font-bold py-3 px-4">อื่นๆ</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
                                                     <FormMessage />
                                                 </FormItem>
                                             )}
@@ -723,22 +838,45 @@ export function RegisterForm() {
 
                                         <FormField
                                             control={form.control}
-                                            name="region"
+                                            name="academicStanding"
                                             render={({ field }) => (
                                                 <FormItem className="space-y-3">
-                                                    <FormLabel className="text-slate-800 font-black text-sm">ภาค</FormLabel>
+                                                    <FormLabel className="text-slate-800 font-black text-sm">วิทยฐานะ</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                                                         <FormControl>
-                                                            <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold">
-                                                                <SelectValue placeholder="เลือกภาค" />
+                                                            <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-sm">
+                                                                <SelectValue placeholder="เลือกวิทยฐานะ" />
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent className="rounded-xl shadow-xl border-none">
-                                                            <SelectItem value="North" className="font-bold py-3 px-4">เหนือ</SelectItem>
-                                                            <SelectItem value="South" className="font-bold py-3 px-4">ใต้</SelectItem>
-                                                            <SelectItem value="Central" className="font-bold py-3 px-4">กลาง</SelectItem>
-                                                            <SelectItem value="Northeast" className="font-bold py-3 px-4">ตะวันออกเฉียงเหนือ</SelectItem>
-                                                            <SelectItem value="East_Bangkok" className="font-bold py-3 px-4">ตะวันออกและกทม.</SelectItem>
+                                                            <SelectItem value="ไม่มี" className="font-bold py-3 px-4">ไม่มี</SelectItem>
+                                                            <SelectItem value="ชำนาญการ" className="font-bold py-3 px-4">ชำนาญการ</SelectItem>
+                                                            <SelectItem value="ชำนาญการพิเศษ" className="font-bold py-3 px-4">ชำนาญการพิเศษ</SelectItem>
+                                                            <SelectItem value="เชี่ยวชาญ" className="font-bold py-3 px-4">เชี่ยวชาญ</SelectItem>
+                                                            <SelectItem value="เชี่ยวชาญพิเศษ" className="font-bold py-3 px-4">เชี่ยวชาญพิเศษ</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        <FormField
+                                            control={form.control}
+                                            name="affiliation"
+                                            render={({ field }) => (
+                                                <FormItem className="space-y-3">
+                                                    <FormLabel className="text-slate-800 font-black text-sm">สังกัดหน่วยงาน</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-sm">
+                                                                <SelectValue placeholder="เลือกสังกัด" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent className="rounded-xl shadow-xl border-none">
+                                                            <SelectItem value="Government" className="font-bold py-3 px-4">รัฐบาล (อาชีวศึกษา)</SelectItem>
+                                                            <SelectItem value="Private" className="font-bold py-3 px-4">เอกชน</SelectItem>
+                                                            <SelectItem value="Supervisor_Unit" className="font-bold py-3 px-4">หน่วยศึกษานิเทศก์</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />
@@ -748,159 +886,57 @@ export function RegisterForm() {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <FormField
-                                        control={form.control}
-                                        name="teachingSubject"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                                <FormLabel className="text-slate-800 font-black text-sm">วิชาที่สอน <span className="text-red-500">*</span></FormLabel>
-                                                <FormControl>
-                                                    <Input
-                                                        placeholder="เช่น คอมพิวเตอร์ธุรกิจ, ภาษาอังกฤษ ฯลฯ"
-                                                        {...field}
-                                                        className="h-12 px-5 rounded-xl border-slate-200 bg-white focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold placeholder:text-slate-300 shadow-sm"
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                    <FormField
-                                        control={form.control}
-                                        name="position"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                                <FormLabel className="text-slate-800 font-black text-sm">ตำแหน่ง <span className="text-red-500">*</span></FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-sm">
-                                                            <SelectValue placeholder="เลือกตำแหน่ง" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent className="rounded-xl shadow-xl border-none">
-                                                        <SelectItem value="ครูอัตราจ้าง" className="font-bold py-3 px-4">ครูอัตราจ้าง</SelectItem>
-                                                        <SelectItem value="พนักงานราชการ" className="font-bold py-3 px-4">พนักงานราชการ</SelectItem>
-                                                        <SelectItem value="ครูผู้ช่วย" className="font-bold py-3 px-4">ครูผู้ช่วย</SelectItem>
-                                                        <SelectItem value="ครู" className="font-bold py-3 px-4">ครู</SelectItem>
-                                                        <SelectItem value="รองผู้อำนวยการ" className="font-bold py-3 px-4">รองผอ.</SelectItem>
-                                                        <SelectItem value="ผู้อำนวยการ" className="font-bold py-3 px-4">ผอ.</SelectItem>
-                                                        <SelectItem value="ศึกษานิเทศก์" className="font-bold py-3 px-4">ศึกษานิเทศก์</SelectItem>
-                                                        <SelectItem value="อื่นๆ" className="font-bold py-3 px-4">อื่นๆ</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="academicStanding"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                                <FormLabel className="text-slate-800 font-black text-sm">วิทยฐานะ</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-sm">
-                                                            <SelectValue placeholder="เลือกวิทยฐานะ" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent className="rounded-xl shadow-xl border-none">
-                                                        <SelectItem value="ไม่มี" className="font-bold py-3 px-4">ไม่มี</SelectItem>
-                                                        <SelectItem value="ชำนาญการ" className="font-bold py-3 px-4">ชำนาญการ</SelectItem>
-                                                        <SelectItem value="ชำนาญการพิเศษ" className="font-bold py-3 px-4">ชำนาญการพิเศษ</SelectItem>
-                                                        <SelectItem value="เชี่ยวชาญ" className="font-bold py-3 px-4">เชี่ยวชาญ</SelectItem>
-                                                        <SelectItem value="เชี่ยวชาญพิเศษ" className="font-bold py-3 px-4">เชี่ยวชาญพิเศษ</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-
-                                    <FormField
-                                        control={form.control}
-                                        name="affiliation"
-                                        render={({ field }) => (
-                                            <FormItem className="space-y-3">
-                                                <FormLabel className="text-slate-800 font-black text-sm">สังกัดหน่วยงาน</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                                    <FormControl>
-                                                        <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-sm">
-                                                            <SelectValue placeholder="เลือกสังกัด" />
-                                                        </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent className="rounded-xl shadow-xl border-none">
-                                                        <SelectItem value="Government" className="font-bold py-3 px-4">รัฐบาล (อาชีวศึกษา)</SelectItem>
-                                                        <SelectItem value="Private" className="font-bold py-3 px-4">เอกชน</SelectItem>
-                                                        <SelectItem value="Supervisor_Unit" className="font-bold py-3 px-4">หน่วยศึกษานิเทศก์</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="pt-10 border-t border-slate-100 space-y-6">
-                                {/* Identity Verification Section */}
-                                <div className="space-y-4 mb-8">
-                                    <div className="flex items-center gap-2 border-l-4 border-blue-600 pl-4 py-1">
-                                        <ShieldCheck className="w-6 h-6 text-blue-600" />
-                                        <h3 className="text-xl font-black text-slate-800">ยืนยันตัวตน</h3>
-                                    </div>
-                                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
-                                        <p className="text-sm font-bold text-slate-800 mb-4">ช่องทางการรับรหัส OTP <span className="text-red-500">*</span></p>
-                                        <div className="flex flex-wrap items-center gap-6">
-                                            <div className="flex items-center gap-2 max-w-[200px] w-full border bg-slate-100 rounded-lg p-3 opacity-50 cursor-not-allowed">
-                                                <input type="radio" id="otp-phone" name="otp-method" disabled className="w-4 h-4 cursor-not-allowed" />
-                                                <label htmlFor="otp-phone" className="text-sm font-bold text-slate-600 cursor-not-allowed">เบอร์โทรศัพท์มือถือ</label>
+                                <div className="pt-10 border-t border-slate-100 space-y-6">
+                                    {/* Identity Verification Section */}
+                                    <div className="space-y-4 mb-8">
+                                        <div className="flex items-center gap-2 border-l-4 border-blue-600 pl-4 py-1">
+                                            <ShieldCheck className="w-6 h-6 text-blue-600" />
+                                            <h3 className="text-xl font-black text-slate-800">ยืนยันตัวตน</h3>
+                                        </div>
+                                        <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200">
+                                            <p className="text-sm font-bold text-slate-800 mb-4">ช่องทางการรับรหัส OTP <span className="text-red-500">*</span></p>
+                                            <div className="flex flex-wrap items-center gap-6">
+                                                <div className="flex items-center gap-2 max-w-[200px] w-full border border-blue-500 bg-white rounded-lg p-3 cursor-pointer ring-1 ring-blue-100 shadow-sm">
+                                                    <input type="radio" id="otp-email" name="otp-method" defaultChecked className="w-4 h-4 text-blue-600 cursor-pointer" />
+                                                    <label htmlFor="otp-email" className="text-sm font-bold text-blue-600 cursor-pointer">อีเมล</label>
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-2 max-w-[200px] w-full border border-blue-500 bg-white rounded-lg p-3 cursor-pointer ring-1 ring-blue-100 shadow-sm">
-                                                <input type="radio" id="otp-email" name="otp-method" defaultChecked className="w-4 h-4 text-blue-600 cursor-pointer" />
-                                                <label htmlFor="otp-email" className="text-sm font-bold text-blue-600 cursor-pointer">อีเมล</label>
+
+                                            <div className="mt-8 flex items-start gap-3">
+                                                <input
+                                                    type="checkbox"
+                                                    id="pdpa-consent"
+                                                    checked={isConsent}
+                                                    onChange={(e) => setIsConsent(e.target.checked)}
+                                                    className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                                />
+                                                <label htmlFor="pdpa-consent" className="text-sm text-slate-600 leading-relaxed cursor-pointer font-medium">
+                                                    1) ข้าพเจ้ายินยอมให้สถาบันและองค์กรพันธมิตรของสถาบัน เก็บรวบรวม ใช้และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า เพื่อนำไปใช้ในการประมวลผล การพิสูจน์ยืนยันตัวตน ตรวจสอบความถูกต้องในการเข้าทำธุรกรรมและ/หรือใช้บริการของสถาบัน รวมทั้งส่งข้อมูล ข่าวสาร และสิทธิประโยชน์ต่างๆ ผ่านทางอีเมล เอสเอ็มเอส และแอปพลิเคชัน โดยข้าพเจ้าได้อ่านและศึกษารายละเอียด <Link href="/privacy" className="text-blue-600 font-bold hover:underline">นโยบายการคุ้มครองข้อมูลส่วนบุคคล</Link> ของสถาบันให้ไว้ที่ Privacy Center โดยตลอดอย่างดีแล้ว
+                                                </label>
                                             </div>
                                         </div>
+                                    </div>
 
-                                        <div className="mt-8 flex items-start gap-3">
-                                            <input
-                                                type="checkbox"
-                                                id="pdpa-consent"
-                                                checked={isConsent}
-                                                onChange={(e) => setIsConsent(e.target.checked)}
-                                                className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                                            />
-                                            <label htmlFor="pdpa-consent" className="text-sm text-slate-600 leading-relaxed cursor-pointer font-medium">
-                                                1) ข้าพเจ้ายินยอมให้สถาบันและองค์กรพันธมิตรของสถาบัน เก็บรวบรวม ใช้และเปิดเผยข้อมูลส่วนบุคคลของข้าพเจ้า เพื่อนำไปใช้ในการประมวลผล การพิสูจน์ยืนยันตัวตน ตรวจสอบความถูกต้องในการเข้าทำธุรกรรมและ/หรือใช้บริการของสถาบัน รวมทั้งส่งข้อมูล ข่าวสาร และสิทธิประโยชน์ต่างๆ ผ่านทางอีเมล เอสเอ็มเอส และแอปพลิเคชัน โดยข้าพเจ้าได้อ่านและศึกษารายละเอียด <a href="#" className="text-blue-600 font-bold hover:underline">นโยบายการคุ้มครองข้อมูลส่วนบุคคล</a> ของสถาบันให้ไว้ที่ Privacy Center โดยตลอดอย่างดีแล้ว
-                                            </label>
-                                        </div>
+                                    <Button
+                                        type="submit"
+                                        className="w-full h-16 bg-[#ff9e99] hover:bg-[#ff8a84] text-white rounded-2xl font-black text-2xl shadow-xl shadow-red-100 transition-all active:scale-[0.98] gap-4"
+                                        disabled={isPending || isUploading || !isConsent}
+                                    >
+                                        {isPending ? "กำลังดำเนินการ..." : "ลงทะเบียน"}
+                                    </Button>
+
+                                    <div className="text-center">
+                                        <Link href="/login" className="inline-flex items-center gap-3 text-slate-500 hover:text-blue-600 font-bold transition-all group">
+                                            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-2 transition-transform" />
+                                            <span>หากมีบัญชีอยู่แล้ว หรือต้องการเข้าใช้ผ่าน ThaiD/OVEC ID? คลิกที่นี่เพื่อเข้าสู่ระบบ</span>
+                                        </Link>
                                     </div>
                                 </div>
-
-                                <Button
-                                    type="submit"
-                                    className="w-full h-16 bg-[#ff9e99] hover:bg-[#ff8a84] text-white rounded-2xl font-black text-2xl shadow-xl shadow-red-100 transition-all active:scale-[0.98] gap-4"
-                                    disabled={isPending || isUploading || !isConsent}
-                                >
-                                    {isPending ? "กำลังดำเนินการ..." : "ลงทะเบียน"}
-                                </Button>
-
-                                <div className="text-center">
-                                    <Link href="/login" className="inline-flex items-center gap-3 text-slate-500 hover:text-blue-600 font-bold transition-all group">
-                                        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-2 transition-transform" />
-                                        <span>หากมีบัญชีอยู่แล้ว หรือต้องการเข้าใช้ผ่าน ThaiD/OVEC ID? คลิกที่นี่เพื่อเข้าสู่ระบบ</span>
-                                    </Link>
-                                </div>
-                            </div>
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
+                            </form>
+                        </Form>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* OTP Verification Dialog */}
             <Dialog open={otpOpen} onOpenChange={setOtpOpen}>

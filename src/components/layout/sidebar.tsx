@@ -223,14 +223,21 @@ export function Sidebar() {
                 )}
 
                 {isCollapsed ? (
-                    <Link href="/settings" className="flex justify-center mb-3">
-                        <button
-                            title="ตั้งค่าข้อมูลส่วนตัว"
-                            className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-xl text-slate-600 hover:bg-slate-100 shadow-sm transition-colors"
-                        >
-                            <Settings className="w-5 h-5" />
-                        </button>
-                    </Link>
+                    <div className="flex flex-col items-center gap-4 mb-4">
+                        <Link href="/settings">
+                            <div className="relative group">
+                                {session?.user?.image ? (
+                                    <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 shadow-sm relative group-hover:ring-2 group-hover:ring-blue-400 transition-all">
+                                        <Image src={session.user.image} alt={session.user.name || "User"} fill className="object-cover" />
+                                    </div>
+                                ) : (
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-50 to-blue-100 flex items-center justify-center text-blue-600 font-bold border border-blue-200 group-hover:ring-2 group-hover:ring-blue-400 transition-all">
+                                        {session?.user?.name?.[0] || 'U'}
+                                    </div>
+                                )}
+                            </div>
+                        </Link>
+                    </div>
                 ) : null}
 
                 <button

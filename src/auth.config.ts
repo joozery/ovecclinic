@@ -45,24 +45,28 @@ export default {
     callbacks: {
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user;
-            const isOnDashboard = nextUrl.pathname.startsWith("/dashboard");
-            const isOnOnboarding = nextUrl.pathname.startsWith("/onboarding");
-            const isOnLogin = nextUrl.pathname.startsWith("/login");
-            const isOnRegister = nextUrl.pathname.startsWith("/register");
+            const isProfileComplete = auth?.user?.isProfileComplete;
+            const pathname = nextUrl.pathname;
+
+            const isOnDashboard = pathname.startsWith("/dashboard");
+            const isOnLogin = pathname.startsWith("/login");
+            const isOnRegister = pathname.startsWith("/register");
 
             if (isOnDashboard) {
                 if (!isLoggedIn) return false;
+                if (!isProfileComplete) return Response.redirect(new URL("/register", nextUrl));
                 return true;
             }
 
-            if (isOnOnboarding) {
-                if (isLoggedIn) return Response.redirect(new URL("/dashboard", nextUrl));
-                return false;
+            if (isOnRegister) {
+                if (isLoggedIn && isProfileComplete) return Response.redirect(new URL("/dashboard", nextUrl));
+                return true;
             }
 
-            if (isOnLogin || isOnRegister) {
+            if (isOnLogin) {
                 if (isLoggedIn) {
-                    return Response.redirect(new URL("/dashboard", nextUrl));
+                    if (isProfileComplete) return Response.redirect(new URL("/dashboard", nextUrl));
+                    return Response.redirect(new URL("/register", nextUrl));
                 }
                 return true;
             }
@@ -74,20 +78,29 @@ export default {
                 if (session.user) {
                     token = { ...token, ...session.user }
                     if (session.user.image) token.picture = session.user.image;
+                    if (session.user.image) (token as any).image = session.user.image;
                 } else {
                     token = { ...token, ...session }
                     if (session.image) token.picture = session.image;
+                    if (session.image) (token as any).image = session.image;
                 }
             }
-            // Note: We cannot query DB in Edge runtime here easily without an adapter.
-            // However, for the initial sign-in, the full user object (returned from authorize or OAuth profile)
-            // is passed to jwt callback.
             if (user) {
                 token.id = user.id;
                 token.role = user.role;
                 token.isProfileComplete = user.isProfileComplete;
-                token.position = (user as any).position;
+                // Add all possible fields to token from user
+                (token as any).idCard = (user as any).idCard;
+                (token as any).firstNameTH = (user as any).firstNameTH;
+                (token as any).lastNameTH = (user as any).lastNameTH;
+                (token as any).firstNameEN = (user as any).firstNameEN;
+                (token as any).lastNameEN = (user as any).lastNameEN;
+                (token as any).prefixTH = (user as any).prefixTH;
+                (token as any).prefixEN = (user as any).prefixEN;
+                (token as any).birthdate = (user as any).birthdate;
+                (token as any).position = (user as any).position;
                 if (user.image) token.picture = user.image;
+                if (user.image) (token as any).image = user.image;
             }
             return token;
         },
@@ -106,7 +119,7 @@ export default {
                 (session.user as any).birthdate = token.birthdate as string;
                 (session.user as any).position = token.position as string;
                 if (token.picture) session.user.image = token.picture as string;
-                else if (token.image) session.user.image = token.image as string;
+                else if ((token as any).image) session.user.image = (token as any).image as string;
             }
             return session;
         },

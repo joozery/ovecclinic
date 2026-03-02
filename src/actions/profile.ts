@@ -9,35 +9,56 @@ import bcrypt from "bcryptjs";
 
 export async function updateProfile(formData: FormData) {
     const session = await auth();
-    if (!session) {
+    if (!session?.user?.id) {
         throw new Error("Unauthorized");
     }
 
     const name = formData.get("name") as string;
     const idCard = formData.get("idCard") as string;
+    const prefixTH = formData.get("prefixTH") as string;
+    const firstNameTH = formData.get("firstNameTH") as string;
+    const lastNameTH = formData.get("lastNameTH") as string;
+    const prefixEN = formData.get("prefixEN") as string;
+    const firstNameEN = formData.get("firstNameEN") as string;
+    const lastNameEN = formData.get("lastNameEN") as string;
+    const birthDay = formData.get("birthDay") as string;
+    const birthMonth = formData.get("birthMonth") as string;
+    const birthYear = formData.get("birthYear") as string;
+    const teachingSubject = formData.get("teachingSubject") as string;
     const phone = formData.get("phone") as string;
     const college = formData.get("college") as string;
-    const province = formData.get("province") as string;
     const position = formData.get("position") as string;
-    const academicStanding = formData.get("academicStanding") as string;
     const region = formData.get("region") as string;
     const affiliation = formData.get("affiliation") as string;
+    const academicStanding = formData.get("academicStanding") as string;
+    const province = formData.get("province") as string;
     const image = formData.get("image") as string;
 
     await dbConnect();
 
+    // Combine Birth Date
+    let birthDate: Date | null = null;
+    if (birthDay && birthMonth && birthYear) {
+        birthDate = new Date(`${Number(birthYear) - 543}-${birthMonth}-${birthDay}`);
+    }
+
     const updateData: any = {
-        name,
+        name: name || `${firstNameTH} ${lastNameTH}`.trim(),
         idCard,
-        $set: {
-            "profile.phone": phone,
-            "profile.college": college,
-            "profile.province": province,
-            "profile.position": position,
-            "profile.academicStanding": academicStanding,
-            "profile.region": region,
-            "profile.affiliation": affiliation,
-        }
+        profile: {
+            prefixTH, firstNameTH, lastNameTH,
+            prefixEN, firstNameEN, lastNameEN,
+            birthDate,
+            phone,
+            college,
+            position,
+            region,
+            province,
+            affiliation,
+            academicStanding,
+            teachingSubject,
+        },
+        isProfileComplete: true,
     };
 
     if (image) {
@@ -47,6 +68,7 @@ export async function updateProfile(formData: FormData) {
     await User.findByIdAndUpdate(session.user.id, updateData);
 
     revalidatePath("/settings");
+    revalidatePath("/");
     return { success: true };
 }
 

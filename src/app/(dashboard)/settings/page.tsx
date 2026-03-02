@@ -46,18 +46,15 @@ export default async function SettingsPage() {
             </div>
 
             <SettingsTabs
-                user={{
+                user={JSON.parse(JSON.stringify({
                     name: user.name,
                     idCard: user.idCard || "",
-                    phone: user.profile?.phone || "",
-                    college: user.profile?.college || "",
-                    province: user.profile?.province || "",
-                    position: user.profile?.position || "",
-                    academicStanding: user.profile?.academicStanding || "ไม่มี",
-                    region: user.profile?.region || "Central",
-                    affiliation: user.profile?.affiliation || "Government",
                     image: user.image || null,
-                }}
+                    ...user.profile,
+                    birthDay: user.profile?.birthDate ? new Date(user.profile.birthDate).getDate().toString().padStart(2, '0') : "",
+                    birthMonth: user.profile?.birthDate ? (new Date(user.profile.birthDate).getMonth() + 1).toString().padStart(2, '0') : "",
+                    birthYear: user.profile?.birthDate ? (new Date(user.profile.birthDate).getFullYear() + 543).toString() : "",
+                }))}
                 providers={JSON.parse(JSON.stringify(user.providerAccounts || []))}
                 hasPassword={!!user.password}
             />
