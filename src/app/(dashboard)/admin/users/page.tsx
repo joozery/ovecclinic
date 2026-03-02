@@ -241,8 +241,8 @@ export default async function AdminUsersPage({
                                             {/* Name */}
                                             <TableCell className="py-4 pl-8">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-700 font-black text-sm shrink-0">
-                                                        {user.name?.[0]?.toUpperCase() || "?"}
+                                                    <div suppressHydrationWarning className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-700 font-black text-sm shrink-0">
+                                                        {user.name?.trim()?.[0]?.toUpperCase() || "?"}
                                                     </div>
                                                     <div>
                                                         <p className="font-bold text-slate-900 text-sm leading-tight">{user.name}</p>
@@ -294,7 +294,7 @@ export default async function AdminUsersPage({
                                             </TableCell>
 
                                             {/* Date */}
-                                            <TableCell className="py-4 text-xs text-slate-400 font-bold text-center">
+                                            <TableCell suppressHydrationWarning className="py-4 text-xs text-slate-400 font-bold text-center">
                                                 {new Date(user.createdAt).toLocaleDateString('th-TH', {
                                                     year: 'numeric',
                                                     month: 'short',

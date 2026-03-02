@@ -1,18 +1,7 @@
 
 import type { NextAuthConfig } from "next-auth"
-import Google from "next-auth/providers/google"
-import Line from "next-auth/providers/line"
-
 export default {
     providers: [
-        Google({
-            clientId: process.env.GOOGLE_CLIENT_ID,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-        }),
-        Line({
-            clientId: process.env.LINE_CLIENT_ID,
-            clientSecret: process.env.LINE_CLIENT_SECRET,
-        }),
         {
             id: "thaid",
             name: "ThaiD",
@@ -21,17 +10,28 @@ export default {
             clientId: process.env.THAID_CLIENT_ID,
             clientSecret: process.env.THAID_CLIENT_SECRET,
             wellKnown: "https://imauth.bora.dopa.go.th/.well-known/openid-configuration",
+            allowDangerousEmailAccountLinking: true,
+            checks: ["pkce", "state", "nonce"],
             authorization: {
                 params: {
-                    scope: "openid profile pid", // Added pid scope which is common in ThaiD
+                    scope: "openid profile pid",
                 },
             },
             profile(profile) {
+                console.log("ThaiD Raw Profile Received FULL:", JSON.stringify(profile, null, 2));
                 return {
                     id: profile.sub || profile.pid,
-                    name: profile.name || `${profile.given_name} ${profile.family_name}`,
+                    name: profile.name || `${profile.given_name || profile.th_fname} ${profile.family_name || profile.th_lname}`,
                     email: profile.email || `${profile.sub || profile.pid}@thaid.go.th`,
                     image: profile.picture,
+                    idCard: profile.pid || profile.sub,
+                    firstNameTH: profile.given_name || profile.th_fname,
+                    lastNameTH: profile.family_name || profile.th_lname,
+                    firstNameEN: profile.given_name_en || profile.en_fname,
+                    lastNameEN: profile.family_name_en || profile.en_lname,
+                    prefixTH: profile.title || profile.th_title,
+                    prefixEN: profile.title_en || profile.en_title,
+                    birthdate: profile.birthdate,
                     role: "teacher",
                     isProfileComplete: false,
                 }
@@ -40,32 +40,29 @@ export default {
     ],
     pages: {
         signIn: "/login",
-        newUser: "/onboarding",
+        newUser: "/dashboard",
     },
     callbacks: {
         authorized({ auth, request: { nextUrl } }) {
             const isLoggedIn = !!auth?.user;
-            const isProfileComplete = auth?.user?.isProfileComplete;
             const isOnDashboard = nextUrl.pathname.startsWith("/dashboard");
             const isOnOnboarding = nextUrl.pathname.startsWith("/onboarding");
             const isOnLogin = nextUrl.pathname.startsWith("/login");
+            const isOnRegister = nextUrl.pathname.startsWith("/register");
 
             if (isOnDashboard) {
                 if (!isLoggedIn) return false;
-                if (!isProfileComplete) return Response.redirect(new URL("/onboarding", nextUrl));
                 return true;
             }
 
             if (isOnOnboarding) {
-                if (!isLoggedIn) return false;
-                if (isProfileComplete) return Response.redirect(new URL("/dashboard", nextUrl));
-                return true;
+                if (isLoggedIn) return Response.redirect(new URL("/dashboard", nextUrl));
+                return false;
             }
 
-            if (isOnLogin) {
+            if (isOnLogin || isOnRegister) {
                 if (isLoggedIn) {
-                    if (isProfileComplete) return Response.redirect(new URL("/dashboard", nextUrl));
-                    return Response.redirect(new URL("/onboarding", nextUrl));
+                    return Response.redirect(new URL("/dashboard", nextUrl));
                 }
                 return true;
             }
@@ -99,6 +96,14 @@ export default {
                 session.user.id = token.id as string;
                 session.user.role = token.role as string;
                 session.user.isProfileComplete = token.isProfileComplete as boolean;
+                (session.user as any).idCard = token.idCard as string;
+                (session.user as any).firstNameTH = token.firstNameTH as string;
+                (session.user as any).lastNameTH = token.lastNameTH as string;
+                (session.user as any).firstNameEN = token.firstNameEN as string;
+                (session.user as any).lastNameEN = token.lastNameEN as string;
+                (session.user as any).prefixTH = token.prefixTH as string;
+                (session.user as any).prefixEN = token.prefixEN as string;
+                (session.user as any).birthdate = token.birthdate as string;
                 (session.user as any).position = token.position as string;
                 if (token.picture) session.user.image = token.picture as string;
                 else if (token.image) session.user.image = token.image as string;

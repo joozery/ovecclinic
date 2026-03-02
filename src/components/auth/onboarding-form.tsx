@@ -88,7 +88,7 @@ export function OnboardingForm() {
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: session?.user?.name || "",
-            idCard: "",
+            idCard: (session?.user as any)?.idCard || "",
             phone: "",
             college: "",
             province: "",

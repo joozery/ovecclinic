@@ -22,6 +22,7 @@ export async function createActivity(formData: FormData) {
     const meetingId = formData.get("meetingId");
     const meetingPassword = formData.get("meetingPassword");
     const bannerImage = formData.get("bannerImage");
+    const externalSourceLink = formData.get("externalSourceLink");
     const documentsRaw = formData.get("documents");
     const documents = documentsRaw ? JSON.parse(documentsRaw as string) : [];
 
@@ -42,6 +43,7 @@ export async function createActivity(formData: FormData) {
         meetingId,
         meetingPassword,
         bannerImage,
+        externalSourceLink,
         documents,
         createdBy: session.user.id,
     });
@@ -128,6 +130,7 @@ export async function updateActivity(id: string, formData: FormData) {
     const meetingId = formData.get("meetingId");
     const meetingPassword = formData.get("meetingPassword");
     const bannerImage = formData.get("bannerImage");
+    const externalSourceLink = formData.get("externalSourceLink");
     const documentsRaw = formData.get("documents");
     const documents = documentsRaw ? JSON.parse(documentsRaw as string) : [];
 
@@ -148,6 +151,7 @@ export async function updateActivity(id: string, formData: FormData) {
         meetingId,
         meetingPassword,
         bannerImage,
+        externalSourceLink,
         documents,
     });
 

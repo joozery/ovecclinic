@@ -24,5 +24,5 @@ export async function authenticate(
 }
 
 export async function socialLogin(provider: string) {
-    await signIn(provider, { redirectTo: "/onboarding" });
+    await signIn(provider, { redirectTo: "/dashboard" });
 }

@@ -150,10 +150,10 @@ export function LatestActivities() {
                                                 </div>
                                                 <div className="min-w-0">
                                                     <p className="text-[10px] font-black text-slate-900 truncate">
-                                                        สน. {activity.createdBy?.name || "ไม่ระบุ"}
+                                                        {activity.createdBy?.name || "ไม่ระบุ"}
                                                     </p>
                                                     <p className="text-[10px] font-bold text-slate-400 truncate">
-                                                        วิทยากรผู้เชี่ยวชาญ
+                                                        {activity.createdBy?.profile?.position || "วิทยากรผู้เชี่ยวชาญ"}
                                                     </p>
                                                 </div>
                                             </div>

@@ -140,12 +140,29 @@ export default async function ActivityDetailPage({
                             </div>
 
                             {/* Documents Card */}
-                            {activity.documents && activity.documents.length > 0 && (
+                            {((activity.documents && activity.documents.length > 0) || activity.externalSourceLink) && (
                                 <div className="bg-white rounded-2xl p-8 md:p-10 border border-slate-100 shadow-sm space-y-6">
                                     <div className="flex items-center gap-3">
                                         <FileText className="w-6 h-6 text-blue-600" />
-                                        <h2 className="text-xl font-black text-slate-900">เอกสารประกอบ</h2>
+                                        <h2 className="text-xl font-black text-slate-900">เอกสารประกอบและสื่อการสอน</h2>
                                     </div>
+
+                                    {activity.externalSourceLink && (
+                                        <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-3xl space-y-3">
+                                            <div className="flex items-center gap-3 text-blue-700">
+                                                <Share2 className="w-5 h-5" />
+                                                <span className="font-black text-sm">ลิงก์เอกสารประกอบเพิ่มเติม (Google Drive / OneDrive)</span>
+                                            </div>
+                                            <p className="text-xs text-slate-500 font-medium">แอดมินหรือศึกษานิเทศก์ได้แนบลิงก์ภายนอกสำหรับรวบรวมเอกสารชุดใหญ่ไว้ให้ดาวน์โหลดเพิ่มเติม</p>
+                                            <Button className="w-full bg-white hover:bg-slate-50 text-blue-600 border border-blue-200 rounded-2xl font-black gap-2 h-12 shadow-sm" asChild>
+                                                <a href={activity.externalSourceLink} target="_blank" rel="noopener noreferrer">
+                                                    <Download className="w-4 h-4" />
+                                                    ไปยังลิงก์เอกสาร
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    )}
+
                                     <div className="space-y-3">
                                         {activity.documents.map((doc: any, i: number) => (
                                             <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 group hover:bg-slate-100 transition-colors">
@@ -248,15 +265,20 @@ export default async function ActivityDetailPage({
                                     <div className="flex gap-4">
                                         <div className="relative w-12 h-12 rounded-2xl overflow-hidden shrink-0">
                                             <Image
-                                                src={activity.createdBy?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${activity.createdBy?.name}`}
+                                                src={activity.createdBy?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${activity.createdBy?.name || 'User'}`}
                                                 alt={activity.createdBy?.name || "Supervisor"}
                                                 fill
                                                 className="object-cover"
                                             />
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-sm font-black text-slate-900 truncate">สน. {activity.createdBy?.name || "ไม่ระบุ"}</p>
-                                            <p className="text-[10px] font-bold text-slate-400">ศึกษานิเทศก์/ชำนาญการพิเศษ</p>
+                                            <p className="text-sm font-black text-slate-900 truncate">
+                                                {activity.createdBy?.name || "ไม่ระบุ"}
+                                            </p>
+                                            <p className="text-[10px] font-bold text-slate-400">
+                                                {activity.createdBy?.profile?.position || "ศึกษานิเทศก์"}
+                                                {activity.createdBy?.profile?.academicStanding ? `/${activity.createdBy.profile.academicStanding}` : ""}
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="space-y-2">
@@ -264,10 +286,18 @@ export default async function ActivityDetailPage({
                                             <Mail className="w-3 h-3" />
                                             <span className="text-[10px] font-bold">{activity.createdBy?.email || "contact@vec.go.th"}</span>
                                         </div>
-                                        <div className="flex items-center gap-2 text-slate-400">
-                                            <Phone className="w-3 h-3" />
-                                            <span className="text-[10px] font-bold">02-XXX-XXXX</span>
-                                        </div>
+                                        {activity.createdBy?.profile?.phone && (
+                                            <div className="flex items-center gap-2 text-slate-400">
+                                                <Phone className="w-3 h-3" />
+                                                <span className="text-[10px] font-bold">{activity.createdBy.profile.phone}</span>
+                                            </div>
+                                        )}
+                                        {!activity.createdBy?.profile?.phone && (
+                                            <div className="flex items-center gap-2 text-slate-400">
+                                                <Phone className="w-3 h-3" />
+                                                <span className="text-[10px] font-bold italic opacity-60">ไม่ได้ระบุเบอร์โทรศัพท์</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

@@ -12,6 +12,7 @@ const ActivitySchema = new mongoose.Schema({
     meetingId: { type: String },
     meetingPassword: { type: String },
     bannerImage: { type: String },
+    externalSourceLink: { type: String }, // ลิงก์เอกสารเพิ่มเติม (Google Drive, etc.)
     documents: [{
         name: { type: String, required: true },
         url: { type: String, required: true },

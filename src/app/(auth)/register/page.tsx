@@ -12,7 +12,7 @@ export default function RegisterPage() {
                 <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-100/50 rounded-full blur-[120px]" />
             </div>
 
-            <div className="relative z-10 w-full max-w-2xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="relative z-10 w-full max-w-7xl space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                 {/* Logo Area */}
                 <div className="flex flex-col items-center space-y-4">
                     <Link href="/" className="transition-transform hover:scale-105 active:scale-95 duration-300">

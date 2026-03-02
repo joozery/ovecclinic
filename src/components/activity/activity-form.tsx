@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
     Form,
     FormControl,
+    FormDescription,
     FormField,
     FormItem,
     FormLabel,
@@ -19,11 +20,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ImagePlus, FileUp, X, Loader2, FileText, CheckCircle2, BookOpen, ChevronsUpDown, Check } from "lucide-react";
+import { ImagePlus, FileUp, X, Loader2, FileText, CheckCircle2 } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
 const formSchema = z.object({
     title: z.string().min(2, "หัวข้อกิจกรรมจำเป็นต้องระบุ"),
@@ -32,31 +31,11 @@ const formSchema = z.object({
     endTime: z.string().refine((date) => !isNaN(Date.parse(date)), { message: "วันที่สิ้นสุดไม่ถูกต้อง" }),
     quota: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, { message: "จำนวนที่นั่งต้องเป็นตัวเลขที่มากกว่า 0" }),
     location: z.string().min(2, "สถานที่หรือลิงก์จำเป็นต้องระบุ"),
-    targetBranch: z.string().optional(),
+    externalSourceLink: z.string().optional(),
     meetingId: z.string().optional(),
     meetingPassword: z.string().optional(),
     bannerImage: z.string().optional(),
 });
-
-const branchOptions = [
-    "ทุกสาขาวิชา",
-    // กลุ่มเกษตรกรรม
-    "เกษตรกรรม", "พืชศาสตร์", "สัตวศาสตร์", "ประมง", "อุตสาหกรรมเกษตร",
-    // กลุ่มอุตสาหกรรม
-    "ช่างยนต์", "ช่างกลโรงงาน", "ช่างเชื่อมโลหะ", "ช่างไฟฟ้ากำลัง", "ช่างอิเล็กทรอนิกส์",
-    "ช่างก่อสร้าง", "ช่างโยธา", "ช่างสถาปัตยกรรม", "ช่างเทคนิคคอมพิวเตอร์", "เมคคาทรอนิกส์",
-    // กลุ่มพาณิชยกรรม/บริหารธุรกิจ
-    "การบัญชี", "การตลาด", "การเลขานุการ", "คอมพิวเตอร์ธุรกิจ", "ธุรกิจค้าปลีก",
-    "การจัดการสำนักงาน", "การจัดการโลจิสติกส์",
-    // กลุ่มคหกรรม
-    "คหกรรมศาสตร์", "อาหารและโภชนาการ", "แฟชั่นและสิ่งทอ", "เสริมสวยและความงาม",
-    // กลุ่มศิลปกรรม
-    "วิจิตรศิลป์", "การออกแบบ", "คอมพิวเตอร์กราฟิก", "ดนตรี",
-    // กลุ่มท่องเที่ยวและการโรงแรม
-    "การโรงแรม", "การท่องเที่ยว",
-    // อื่นๆ
-    "เทคโนโลยีสารสนเทศ", "อื่นๆ",
-];
 
 interface ActivityFormProps {
     onSuccess?: () => void;
@@ -71,7 +50,6 @@ export function ActivityForm({ onSuccess, onSuccessRedirect, initialData, activi
     const [isUploading, setIsUploading] = useState(false);
     const [documents, setDocuments] = useState<any[]>(initialData?.documents || []);
     const [bannerPreview, setBannerPreview] = useState<string | null>(initialData?.bannerImage || null);
-    const [branchOpen, setBranchOpen] = useState(false);
 
     const bannerRef = useRef<HTMLInputElement>(null);
     const docRef = useRef<HTMLInputElement>(null);
@@ -85,7 +63,7 @@ export function ActivityForm({ onSuccess, onSuccessRedirect, initialData, activi
             endTime: initialData?.endTime ? new Date(initialData.endTime).toISOString().slice(0, 16) : "",
             quota: initialData?.quota ? String(initialData.quota) : "",
             location: initialData?.location || "",
-            targetBranch: initialData?.targetBranch || "",
+            externalSourceLink: initialData?.externalSourceLink || "",
             meetingId: initialData?.meetingId || "",
             meetingPassword: initialData?.meetingPassword || "",
             bannerImage: initialData?.bannerImage || "",
@@ -146,7 +124,7 @@ export function ActivityForm({ onSuccess, onSuccessRedirect, initialData, activi
         startTransition(async () => {
             const formData = new FormData();
             Object.entries(values).forEach(([key, value]) => {
-                formData.append(key, value);
+                formData.append(key, value || "");
             });
             formData.append("documents", JSON.stringify(documents));
 
@@ -308,65 +286,19 @@ export function ActivityForm({ onSuccess, onSuccessRedirect, initialData, activi
                         />
                     </div>
 
-                    {/* สาขาวิชาที่สอน — Searchable Combobox */}
                     <FormField
                         control={form.control}
-                        name="targetBranch"
+                        name="externalSourceLink"
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel className="flex items-center gap-2">
-                                    <BookOpen className="w-4 h-4 text-blue-600" />
-                                    สาขาวิชาที่สอน (กลุ่มเป้าหมาย)
+                                    <FileText className="w-4 h-4 text-blue-600" />
+                                    ลิงก์เอกสารประกอบเพิ่มเติม (Google Drive / OneDrive)
                                 </FormLabel>
-                                <Popover open={branchOpen} onOpenChange={setBranchOpen}>
-                                    <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <button
-                                                type="button"
-                                                role="combobox"
-                                                aria-expanded={branchOpen}
-                                                className="w-full flex items-center justify-between h-12 px-4 rounded-xl border border-input bg-background text-sm ring-offset-background hover:bg-accent/30 transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                            >
-                                                <span className={field.value ? "text-foreground" : "text-muted-foreground"}>
-                                                    {field.value || "เลือกสาขาวิชา... (เว้นว่างหากเปิดทุกสาขา)"}
-                                                </span>
-                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                            </button>
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-                                        <Command>
-                                            <CommandInput placeholder="พิมค้นหาสาขาวิชา..." />
-                                            <CommandList className="max-h-56">
-                                                <CommandEmpty>ไม่พบสาขาวิชาที่ต้องการ</CommandEmpty>
-                                                <CommandGroup>
-                                                    {branchOptions.map((b) => (
-                                                        <CommandItem
-                                                            key={b}
-                                                            value={b}
-                                                            onSelect={(val) => {
-                                                                field.onChange(val === field.value ? "" : val);
-                                                                setBranchOpen(false);
-                                                            }}
-                                                        >
-                                                            <Check className={`mr-2 h-4 w-4 ${field.value === b ? "opacity-100" : "opacity-0"}`} />
-                                                            {b}
-                                                        </CommandItem>
-                                                    ))}
-                                                </CommandGroup>
-                                            </CommandList>
-                                        </Command>
-                                    </PopoverContent>
-                                </Popover>
-                                {field.value && (
-                                    <button
-                                        type="button"
-                                        onClick={() => field.onChange("")}
-                                        className="text-[11px] text-slate-400 hover:text-red-500 font-medium mt-1 flex items-center gap-1"
-                                    >
-                                        <X className="w-3 h-3" /> ล้างค่า
-                                    </button>
-                                )}
+                                <FormControl>
+                                    <Input placeholder="https://drive.google.com/..." className="rounded-xl h-12" {...field} />
+                                </FormControl>
+                                <FormDescription className="text-[10px]">แนบลิงก์สำหรับไฟล์ขนาดใหญ่หรือโฟลเดอร์รวบรวมเอกสาร</FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )}

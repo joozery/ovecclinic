@@ -111,11 +111,6 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
                                                     ✓ ลงทะเบียนแล้ว
                                                 </span>
                                             )}
-                                            {activity.targetBranch && (
-                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                                                    {activity.targetBranch}
-                                                </span>
-                                            )}
                                         </div>
                                         <Link href={`/activities/${activity._id}`} className="font-bold text-slate-900 text-sm leading-snug line-clamp-1 group-hover:text-[#1a237e] transition-colors">
                                             {activity.title}
@@ -220,12 +215,6 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
                                     <Link href={`/activities/${activity._id}`} className="font-bold text-slate-900 text-[15px] leading-snug line-clamp-2 group-hover:text-[#1a237e] transition-colors">
                                         {activity.title}
                                     </Link>
-
-                                    {activity.targetBranch && (
-                                        <span className="inline-flex self-start items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
-                                            📚 {activity.targetBranch}
-                                        </span>
-                                    )}
 
                                     <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">{activity.description}</p>
 

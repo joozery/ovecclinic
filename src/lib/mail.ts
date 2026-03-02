@@ -151,3 +151,36 @@ http://nitedx.vec.go.th`,
     }
 }
 
+export async function sendOTPEmail({
+    to,
+    otp,
+}: {
+    to: string;
+    otp: string;
+}) {
+    const mailOptions = {
+        from: `"ระบบยืนยันตัวตน (NitedX)" <${process.env.SMTP_FROM}>`,
+        to,
+        subject: `รหัสผ่านแบบใช้ครั้งเดียว (OTP) ของคุณคือ ${otp}`,
+        text: `รหัสผ่านแบบใช้ครั้งเดียว (OTP) ของคุณคือ: ${otp}\nรหัสนี้จะหมดอายุใน 5 นาที\nโปรดอย่าเปิดเผยรหัสนี้แก่ผู้อื่น`,
+        html: `
+            <div style="font-family: 'Sarabun', sans-serif; line-height: 1.6; color: #333; max-width: 500px; margin: 0 auto; border: 1px solid #eaeaea; padding: 30px; border-radius: 12px; background-color: #fff; text-align: center;">
+                <h2 style="color: #1a237e; margin-bottom: 20px;">ยืนยันอีเมลของคุณ</h2>
+                <p style="font-size: 16px; color: #555;">รหัสผ่านแบบใช้ครั้งเดียว (OTP) ของคุณคือ:</p>
+                <div style="font-size: 32px; font-weight: bold; color: #1a237e; letter-spacing: 5px; margin: 20px 0; background-color: #f5f7ff; padding: 15px; border-radius: 8px;">
+                    ${otp}
+                </div>
+                <p style="font-size: 14px; color: #777;">รหัสนี้จะหมดอายุใน <strong>5 นาที</strong></p>
+                <p style="font-size: 12px; color: #999; margin-top: 30px;">โปรดอย่าเปิดเผยรหัสนี้แก่ผู้อื่น หากคุณไม่ได้ดำเนินการนี้โปรดเพิกเฉยต่ออีเมลฉบับนี้</p>
+            </div>
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        return { success: true };
+    } catch (error) {
+        console.error("Error sending OTP email:", error);
+        throw error;
+    }
+}

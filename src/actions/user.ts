@@ -12,7 +12,18 @@ export async function updateProfile(formData: FormData) {
         throw new Error("Not authenticated");
     }
 
-    const name = formData.get("name") as string;
+    const prefixTH = formData.get("prefixTH") as string;
+    const firstNameTH = formData.get("firstNameTH") as string;
+    const lastNameTH = formData.get("lastNameTH") as string;
+    const prefixEN = formData.get("prefixEN") as string;
+    const firstNameEN = formData.get("firstNameEN") as string;
+    const lastNameEN = formData.get("lastNameEN") as string;
+
+    const birthDay = formData.get("birthDay") as string;
+    const birthMonth = formData.get("birthMonth") as string;
+    const birthYear = formData.get("birthYear") as string;
+
+    const teachingSubject = formData.get("teachingSubject") as string;
     const phone = formData.get("phone") as string;
     const college = formData.get("college") as string;
     const position = formData.get("position") as string;
@@ -44,9 +55,18 @@ export async function updateProfile(formData: FormData) {
     const user = await User.findById(session.user.id);
     const wasAlreadyComplete = user?.isProfileComplete;
 
+    // Combine Birth Date
+    let birthDate: Date | null = null;
+    if (birthDay && birthMonth && birthYear) {
+        birthDate = new Date(`${Number(birthYear) - 543}-${birthMonth}-${birthDay}`);
+    }
+
     const updateData: any = {
-        name,
+        name: `${firstNameTH} ${lastNameTH}`.trim(),
         profile: {
+            prefixTH, firstNameTH, lastNameTH,
+            prefixEN, firstNameEN, lastNameEN,
+            birthDate,
             phone,
             college,
             position,
@@ -54,6 +74,7 @@ export async function updateProfile(formData: FormData) {
             province,
             affiliation,
             academicStanding,
+            teachingSubject,
         },
         isProfileComplete: true,
     };
@@ -69,7 +90,7 @@ export async function updateProfile(formData: FormData) {
             const { sendWelcomeEmail } = await import("@/lib/mail");
             await sendWelcomeEmail({
                 to: user.email,
-                userName: name || user.name || "สมาชิกใหม่",
+                userName: `${firstNameTH} ${lastNameTH}`.trim() || user.name || "สมาชิกใหม่",
             });
         } catch (emailError) {
             console.error("Failed to send welcome email during onboarding:", emailError);

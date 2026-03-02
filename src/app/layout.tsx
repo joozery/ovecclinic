@@ -25,8 +25,8 @@ export const metadata: Metadata = {
   title: "OVEC Supervise Clinic | ระบบนิเทศและบริหารจัดการเกียรติบัตร",
   description: "ระบบนิเทศออนไลน์และบริหารจัดการเกียรติบัตรอิเล็กทรอนิกส์ สำนักงานคณะกรรมการการอาชีวศึกษา",
   icons: {
-    icon: "/logo/logo.jpg",
-    apple: "/logo/logo.jpg",
+    icon: "/S__40550412.png",
+    apple: "/S__40550412.png",
   },
 };
 

@@ -18,7 +18,8 @@ import {
     Activity,
     ChevronLeft,
     ChevronRight as ChevronRightIcon,
-    Award
+    Award,
+    MessageSquareWarning
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
@@ -88,6 +89,18 @@ export function Sidebar() {
             icon: Award,
             href: "/admin/certificate",
             active: pathname === "/admin/certificate",
+        },
+        {
+            label: "แจ้งปัญหาและสอบถาม",
+            icon: MessageSquareWarning,
+            href: "/admin/issues",
+            active: pathname === "/admin/issues",
+        },
+        {
+            label: "ตั้งค่าระบบ",
+            icon: Settings,
+            href: "/admin/settings",
+            active: pathname === "/admin/settings",
         }
     ];
 

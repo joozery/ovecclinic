@@ -18,6 +18,18 @@ const UserSchema = new mongoose.Schema({
     }],
     idCard: { type: String, unique: true, sparse: true },
     profile: {
+        registrantType: {
+            type: String,
+            enum: ['Thai', 'Foreigner', 'Stateless'],
+            default: 'Thai'
+        },
+        prefixTH: String,
+        firstNameTH: String,
+        lastNameTH: String,
+        prefixEN: String,
+        firstNameEN: String,
+        lastNameEN: String,
+        birthDate: Date,
         phone: String,
         college: String,
         position: String,
@@ -31,6 +43,7 @@ const UserSchema = new mongoose.Schema({
             enum: ['Government', 'Private', 'Supervisor_Unit'],
         },
         academicStanding: String,
+        teachingSubject: String,
     },
     isProfileComplete: { type: Boolean, default: false },
 }, { timestamps: true });
