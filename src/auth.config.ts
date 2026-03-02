@@ -106,5 +106,11 @@ export default {
             return session;
         },
     },
-    session: { strategy: "jwt" },
+    session: {
+        strategy: "jwt",
+        maxAge: 30 * 24 * 60 * 60, // 30 วัน (วินาที)
+    },
+    jwt: {
+        maxAge: 30 * 24 * 60 * 60, // 30 วัน (วินาที)
+    },
 } satisfies NextAuthConfig

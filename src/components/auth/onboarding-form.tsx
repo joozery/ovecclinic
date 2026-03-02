@@ -72,7 +72,7 @@ const formSchema = z.object({
     province: z.string().min(2, "กรุณากรอกจังหวัด"),
     position: z.string().min(1, "กรุณาเลือกตำแหน่ง"),
     region: z.string().min(1, "กรุณาเลือกภาค"),
-    affiliation: z.enum(['Government', 'Private']),
+    affiliation: z.enum(['Government', 'Private', 'Supervisor_Unit']),
     academicStanding: z.string().min(1, "กรุณาเลือกวิทยฐานะ"),
 });
 
@@ -466,6 +466,7 @@ export function OnboardingForm() {
                                                 <SelectContent className="rounded-xl border-slate-100 shadow-xl">
                                                     <SelectItem value="Government" className="font-bold py-3 px-4">รัฐบาล (อาชีวศึกษา)</SelectItem>
                                                     <SelectItem value="Private" className="font-bold py-3 px-4">เอกชน</SelectItem>
+                                                    <SelectItem value="Supervisor_Unit" className="font-bold py-3 px-4">หน่วยศึกษานิเทศก์</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage className="text-[10px] font-bold" />

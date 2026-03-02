@@ -71,7 +71,7 @@ const profileFormSchema = z.object({
     province: z.string().min(2, "กรุณากรอกจังหวัด"),
     position: z.string().min(1, "กรุณาเลือกตำแหน่ง"),
     region: z.string().min(1, "กรุณาเลือกภาค"),
-    affiliation: z.enum(['Government', 'Private']),
+    affiliation: z.enum(['Government', 'Private', 'Supervisor_Unit']),
     academicStanding: z.string().min(1, "กรุณาเลือกวิทยฐานะ"),
 });
 
@@ -87,7 +87,7 @@ interface ProfileFormProps {
         province?: string;
         position?: string;
         region?: string;
-        affiliation?: 'Government' | 'Private';
+        affiliation?: 'Government' | 'Private' | 'Supervisor_Unit';
         academicStanding?: string;
     }
 }
