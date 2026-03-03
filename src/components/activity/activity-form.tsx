@@ -35,6 +35,7 @@ const formSchema = z.object({
     meetingId: z.string().optional(),
     meetingPassword: z.string().optional(),
     bannerImage: z.string().optional(),
+    requirements: z.string().optional(), // We'll handle the array logic manually or via JSON string if using Hidden input
 });
 
 interface ActivityFormProps {
@@ -49,6 +50,7 @@ export function ActivityForm({ onSuccess, onSuccessRedirect, initialData, activi
     const [isPending, startTransition] = useTransition();
     const [isUploading, setIsUploading] = useState(false);
     const [documents, setDocuments] = useState<any[]>(initialData?.documents || []);
+    const [requirements, setRequirements] = useState<string[]>(initialData?.requirements || []);
     const [bannerPreview, setBannerPreview] = useState<string | null>(initialData?.bannerImage || null);
 
     const bannerRef = useRef<HTMLInputElement>(null);
@@ -120,39 +122,75 @@ export function ActivityForm({ onSuccess, onSuccessRedirect, initialData, activi
         setDocuments(prev => prev.filter((_, i) => i !== index));
     };
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
-        startTransition(async () => {
-            const formData = new FormData();
-            Object.entries(values).forEach(([key, value]) => {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const addRequirement = () => {
+        setRequirements(prev => [...prev, ""]);
+    };
+
+    const updateRequirement = (index: number, value: string) => {
+        const newReqs = [...requirements];
+        newReqs[index] = value;
+        setRequirements(newReqs);
+    };
+
+    const removeRequirement = (index: number) => {
+        setRequirements(prev => prev.filter((_, i) => i !== index));
+    };
+
+    async function onSubmit(values: z.infer<typeof formSchema>) {
+        if (isSubmitting) return; // prevent double submit
+        setIsSubmitting(true);
+
+        const currentRequirements = [...requirements];
+        const filteredRequirements = currentRequirements.filter(req => req && req.trim() !== "");
+
+        const formData = new FormData();
+        Object.entries(values).forEach(([key, value]) => {
+            if (key !== "requirements") {
                 formData.append(key, value || "");
-            });
-            formData.append("documents", JSON.stringify(documents));
-
-            try {
-                if (activityId) {
-                    await updateActivity(activityId, formData);
-                    toast.success("อัปเดตกิจกรรมสำเร็จ");
-                } else {
-                    await createActivity(formData);
-                    toast.success("สร้างกิจกรรมสำเร็จ");
-                }
-
-                if (!activityId) {
-                    form.reset();
-                    setBannerPreview(null);
-                    setDocuments([]);
-                }
-
-                if (onSuccess) onSuccess();
-                if (onSuccessRedirect) {
-                    router.push(onSuccessRedirect);
-                    router.refresh();
-                }
-            } catch (error) {
-                toast.error("ไม่สามารถบันทึกกิจกรรมได้");
-                console.error("Failed to save activity", error);
             }
         });
+        formData.append("documents", JSON.stringify(documents));
+        formData.append("requirements", JSON.stringify(filteredRequirements));
+
+        try {
+            let res: any;
+            if (activityId) {
+                res = await updateActivity(activityId, formData);
+            } else {
+                res = await createActivity(formData);
+            }
+
+            if (!res?.success) {
+                toast.error(res?.error || "ไม่สามารถบันทึกกิจกรรมได้");
+                return;
+            }
+
+            toast.success(activityId ? "อัปเดตกิจกรรมสำเร็จ" : "สร้างกิจกรรมสำเร็จ");
+
+            if (!activityId) {
+                form.reset();
+                setBannerPreview(null);
+                setDocuments([]);
+                setRequirements([]);
+            }
+
+            if (onSuccess) onSuccess();
+            if (onSuccessRedirect) {
+                router.push(onSuccessRedirect);
+                router.refresh();
+            } else if (activityId) {
+                // Redirect to detail page to confirm changes
+                router.push(`/activities/${activityId}`);
+                router.refresh();
+            }
+        } catch (error) {
+            toast.error("ไม่สามารถบันทึกกิจกรรมได้");
+            console.error("Failed to save activity", error);
+        } finally {
+            setIsSubmitting(false);
+        }
     }
 
     return (
@@ -331,6 +369,56 @@ export function ActivityForm({ onSuccess, onSuccessRedirect, initialData, activi
                                 </FormItem>
                             )}
                         />
+                    </div>
+                </div>
+
+                {/* Requirements Section */}
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <FormLabel className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            สิ่งที่ต้องเตรียม / ข้อกำหนด
+                        </FormLabel>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-emerald-600 font-bold h-8 gap-1.5"
+                            onClick={addRequirement}
+                        >
+                            <ImagePlus className="w-4 h-4" /> เพิ่มข้อกำหนด
+                        </Button>
+                    </div>
+
+                    <div className="grid gap-3">
+                        {requirements.map((req, i) => (
+                            <div key={i} className="flex gap-2">
+                                <Input
+                                    value={req}
+                                    placeholder={`ข้อที่ ${i + 1} เช่น เตรียมคอมพิวเตอร์...`}
+                                    onChange={(e) => updateRequirement(i, e.target.value)}
+                                    className="rounded-xl h-11"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-11 w-11 shrink-0 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl"
+                                    onClick={() => removeRequirement(i)}
+                                >
+                                    <X className="w-4 h-4" />
+                                </Button>
+                            </div>
+                        ))}
+
+                        {requirements.length === 0 && (
+                            <div
+                                onClick={addRequirement}
+                                className="text-center py-6 border-2 border-dashed border-slate-100 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors"
+                            >
+                                <p className="text-[10px] font-bold text-slate-400">คลิกเพื่อเพิ่มสิ่งที่ต้องเตรียม (เช่น อุปกรณ์, โปรแกรมที่ต้องใช้)</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 

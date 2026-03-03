@@ -7,6 +7,7 @@ import { getPublicActivities } from "@/actions/public";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday, addMonths, subMonths } from "date-fns";
 import { th } from "date-fns/locale";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export function CalendarSection() {
     const [activities, setActivities] = useState<any[]>([]);
@@ -18,6 +19,12 @@ export function CalendarSection() {
     const startDate = startOfWeek(startOfMonth(currentMonth));
     const endDate = endOfWeek(endOfMonth(currentMonth));
     const calendarDays = eachDayOfInterval({ start: startDate, end: endDate });
+
+    // Group into weeks
+    const weeks = [];
+    for (let i = 0; i < calendarDays.length; i += 7) {
+        weeks.push(calendarDays.slice(i, i + 7));
+    }
 
     const currentMonthActivities = activities.filter(a => isSameMonth(new Date(a.startTime), currentMonth));
 
@@ -36,6 +43,48 @@ export function CalendarSection() {
         }
         fetchActivities();
     }, []);
+
+    // Helper to get activities for a specific week
+    const getWeekActivities = (weekDays: Date[]) => {
+        const weekStart = weekDays[0];
+        const weekEnd = weekDays[6];
+
+        const weekActs = activities.filter(act => {
+            const start = new Date(act.startTime);
+            const end = new Date(act.endTime || act.startTime);
+            return (start <= weekEnd && end >= weekStart);
+        });
+
+        // Arrange in tracks
+        const tracks: any[][] = [];
+        weekActs.forEach(act => {
+            const start = new Date(act.startTime);
+            const end = new Date(act.endTime || act.startTime);
+
+            const startIdx = Math.max(0, Math.floor((start.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000)));
+            const endIdx = Math.min(6, Math.floor((end.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000)));
+            const span = endIdx - startIdx + 1;
+
+            // Find first available track
+            let trackIdx = 0;
+            while (true) {
+                if (!tracks[trackIdx]) tracks[trackIdx] = [];
+                const conflict = tracks[trackIdx].some(tAct => {
+                    const tStart = Math.max(0, Math.floor((new Date(tAct.startTime).getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000)));
+                    const tEnd = Math.min(6, Math.floor((new Date(tAct.endTime || tAct.startTime).getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000)));
+                    return (startIdx <= tEnd && endIdx >= tStart);
+                });
+
+                if (!conflict) {
+                    tracks[trackIdx].push({ ...act, startIdx, span });
+                    break;
+                }
+                trackIdx++;
+            }
+        });
+
+        return tracks;
+    };
 
     return (
         <section className="relative py-24 bg-gradient-to-br from-blue-200/50 via-blue-100/30 to-indigo-200/40 overflow-hidden">
@@ -73,58 +122,91 @@ export function CalendarSection() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-7 mb-2">
+                        {/* Calendar Week Days Header */}
+                        <div className="grid grid-cols-7 mb-2 border-b border-slate-50 pb-2">
                             {days.map((day, i) => (
-                                <div key={i} className={`text-center text-[10px] uppercase tracking-wider font-bold pb-2 ${i === 0 ? "text-red-500" : "text-slate-400"}`}>
+                                <div key={i} className={`text-center text-[10px] uppercase tracking-wider font-bold ${i === 0 ? "text-red-500" : "text-slate-400"}`}>
                                     {day}
                                 </div>
                             ))}
                         </div>
 
-                        <div className="grid grid-cols-7 gap-px bg-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
-                            {calendarDays.map((date, idx) => {
-                                const isCurrentMonthDate = isSameMonth(date, currentMonth);
-                                const isDateToday = isToday(date);
-                                const dateActivities = activities.filter(a => isSameDay(new Date(a.startTime), date));
-                                const isSunday = date.getDay() === 0;
-
+                        {/* Calendar Grid - Week by Week */}
+                        <div className="bg-slate-100/50 border border-slate-100 rounded-2xl overflow-hidden divide-y divide-slate-100">
+                            {weeks.map((week, wIdx) => {
+                                const tracks = getWeekActivities(week);
                                 return (
-                                    <div key={idx} className={`bg-white aspect-square p-2 hover:bg-slate-50 transition-colors group relative cursor-pointer ${!isCurrentMonthDate ? "opacity-40" : ""}`}>
-                                        <span className={`text-xs font-bold ${isSunday ? "text-red-500" : "text-slate-600"} ${isDateToday && !isSunday ? "text-[#1a237e]" : ""}`}>
-                                            {format(date, "d")}
-                                        </span>
-                                        {isDateToday && (
-                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 bg-[#1a237e] rounded-full flex items-center justify-center shadow-md">
-                                                <span className="text-white text-[10px] font-bold">{format(date, "d")}</span>
-                                            </div>
-                                        )}
-                                        {dateActivities.length > 0 && (
-                                            <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 flex gap-0.5">
-                                                {dateActivities.slice(0, 3).map((act, dotIdx) => (
-                                                    <div key={dotIdx} className={`w-1 h-1 rounded-full ${act.status === 'Full' ? 'bg-amber-500' : 'bg-emerald-500'}`}></div>
-                                                ))}
-                                                {dateActivities.length > 3 && (
-                                                    <div className="w-1 h-1 bg-slate-400 rounded-full"></div>
-                                                )}
-                                            </div>
-                                        )}
+                                    <div key={wIdx} className="relative min-h-[110px] bg-white group/week">
+                                        {/* Day Cells Background */}
+                                        <div className="absolute inset-0 grid grid-cols-7 divide-x divide-slate-50">
+                                            {week.map((date, dIdx) => {
+                                                const isCurrentMonthDate = isSameMonth(date, currentMonth);
+                                                const isDateToday = isToday(date);
+                                                const isSunday = date.getDay() === 0;
+                                                return (
+                                                    <div key={dIdx} className={cn(
+                                                        "p-1.5 flex flex-col transition-colors",
+                                                        !isCurrentMonthDate && "bg-slate-50/30 opacity-40",
+                                                        isDateToday && "bg-blue-50/20"
+                                                    )}>
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <span className={cn(
+                                                                "text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full",
+                                                                isDateToday ? "bg-blue-600 text-white shadow-sm" : isSunday ? "text-red-500" : "text-slate-500"
+                                                            )}>
+                                                                {format(date, "d")}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Activity Bars Overlay */}
+                                        <div className="relative pt-7 pb-2 px-0.5 space-y-1">
+                                            {tracks.map((track, trackIdx) => (
+                                                <div key={trackIdx} className="h-5 relative">
+                                                    {track.map((act, actIdx) => (
+                                                        <div
+                                                            key={actIdx}
+                                                            style={{
+                                                                left: `${(act.startIdx * 100) / 7}%`,
+                                                                width: `${(act.span * 100) / 7}%`
+                                                            }}
+                                                            className={cn(
+                                                                "absolute h-full px-1.5 py-0.5 rounded-md text-[9px] font-bold truncate z-10 mx-0.5 transition-all hover:scale-[1.02] hover:z-20 shadow-sm border-l-4",
+                                                                act.status === 'Full' ? 'bg-amber-100 text-amber-700 border-amber-500' :
+                                                                    act.status === 'Closed' ? 'bg-slate-100 text-slate-600 border-slate-400' :
+                                                                        'bg-emerald-100 text-emerald-700 border-emerald-500'
+                                                            )}
+                                                            title={`${act.title} (${format(new Date(act.startTime), "HH:mm")} - ${format(new Date(act.endTime), "HH:mm")})`}
+                                                        >
+                                                            {act.title}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ))}
+                                            {tracks.length === 0 && (
+                                                <div className="h-5 invisible">Spacer</div>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })}
                         </div>
 
                         <div className="mt-6 flex flex-wrap gap-4 border-t border-slate-50 pt-6">
-                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400">
-                                สถานะ:
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                สถานะกิจกรรม:
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div> เปิดรับสมัคร
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 bg-emerald-50 px-2 py-1 rounded border-l-4 border-emerald-500">
+                                เปิดรับสมัคร
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                                <div className="w-2 h-2 bg-amber-500 rounded-full"></div> เต็มแล้ว
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 bg-amber-50 px-2 py-1 rounded border-l-4 border-amber-500">
+                                เต็มแล้ว
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
-                                <div className="w-2 h-2 bg-slate-600 rounded-full"></div> ปิดกิจกรรม
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-600 bg-slate-50 px-2 py-1 rounded border-l-4 border-slate-400">
+                                ปรับปรุง/ปิดรับ
                             </div>
                         </div>
                     </div>

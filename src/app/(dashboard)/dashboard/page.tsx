@@ -4,13 +4,20 @@ import { redirect } from "next/navigation";
 import { getSystemStats, getMonthlyStats } from "@/actions/stats";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { OverviewChart } from "@/components/dashboard/overview-chart";
+import { DashboardFilters } from "@/components/dashboard/dashboard-filters";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExportButton } from "@/components/dashboard/export-button";
 import Link from "next/link";
 import { Calendar, GraduationCap, ClipboardCheck, ArrowRight, Activity, Plus } from "lucide-react";
 
-export default async function DashboardPage() {
+
+export default async function DashboardPage({
+    searchParams
+}: {
+    searchParams: Promise<{ fy?: string; month?: string }>;
+}) {
+    const params = await searchParams;
     const session = await auth();
 
     if (!session) {
@@ -21,8 +28,9 @@ export default async function DashboardPage() {
     const isAdmin = role === 'admin' || role === 'super_admin' || role === 'supervisor';
 
     if (isAdmin) {
-        const systemStats = await getSystemStats();
-        const monthlyStats = await getMonthlyStats();
+        const filters = { month: params.month, fy: params.fy };
+        const systemStats = await getSystemStats(filters);
+        const monthlyStats = await getMonthlyStats({ fy: params.fy });
 
         return (
             <div className="space-y-8">
@@ -33,7 +41,10 @@ export default async function DashboardPage() {
                     </div>
                 </div>
 
-                <StatsCards data={systemStats} />
+                {/* Filters Section */}
+                <DashboardFilters />
+
+                <StatsCards data={{ ...systemStats, supervisors: systemStats.supervisorsCount }} />
 
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
                     <Card className="lg:col-span-4 border-none bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl overflow-hidden transition-all hover:shadow-xl hover:shadow-blue-500/5">
@@ -42,7 +53,7 @@ export default async function DashboardPage() {
                                 <Activity className="w-5 h-5 text-blue-600" />
                                 แนวโน้มรายเดือน
                             </CardTitle>
-                            <CardDescription className="text-sm font-medium">เปรียบเทียบจำนวนการลงทะเบียนย้อนหลังในช่วง 6 เดือนที่ผ่านมา</CardDescription>
+                            <CardDescription className="text-sm font-medium">เปรียบเทียบจำนวนการลงทะเบียนย้อนหลังของปีงบประมาณ</CardDescription>
                         </CardHeader>
                         <CardContent className="p-8 pl-2">
                             <OverviewChart data={monthlyStats} />
@@ -81,7 +92,7 @@ export default async function DashboardPage() {
                                                 <div className="w-1.5 h-1.5 bg-current rounded-[1px]" />
                                             </div>
                                         </div>
-                                        <span className="text-sm font-black text-slate-700">ปฏิทินกิจกรรม</span>
+                                        <span className="text-sm font-black text-slate-700">รายการกิจกรรมทั้งหมด</span>
                                     </div>
                                     <ArrowRight className="w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform group-hover:text-emerald-500" />
                                 </button>
@@ -90,13 +101,76 @@ export default async function DashboardPage() {
                             <div className="relative">
                                 <ExportButton variant="dashboard" />
                             </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
+                {/* Detailed Breakdowns */}
+                <div className="grid gap-6 md:grid-cols-3">
+                    {/* Supervisors Breakdown */}
+                    <Card className="border-none bg-white shadow-sm rounded-2xl">
+                        <CardHeader className="p-6">
+                            <CardTitle className="text-sm font-black uppercase tracking-wider text-slate-400">ผลงานศึกษานิเทศก์</CardTitle>
+                            <CardDescription className="text-xs font-bold">ศึกษานิเทศก์ที่มีจำนวนการนิเทศสูงสุด</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-6 pt-0 space-y-4">
+                            {systemStats.breakdowns.supervisors.map((s, idx) => (
+                                <div key={idx} className="flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <p className="text-xs font-black text-slate-800">{s.name}</p>
+                                        <p className="text-[10px] font-bold text-slate-400">{s.unit}</p>
+                                    </div>
+                                    <div className="px-2 py-1 bg-blue-50 text-blue-600 rounded-md text-[10px] font-black">
+                                        {s.count} ครั้ง
+                                    </div>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+
+                    {/* Organizing Units Breakdown */}
+                    <Card className="border-none bg-white shadow-sm rounded-2xl">
+                        <CardHeader className="p-6">
+                            <CardTitle className="text-sm font-black uppercase tracking-wider text-slate-400">หน่วยงานที่จัดนิเทศ</CardTitle>
+                            <CardDescription className="text-xs font-bold">สรุปตามสังกัด/หน่วยงานต้นสังกัด</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-6 pt-0 space-y-4">
+                            {systemStats.breakdowns.units.map((u, idx) => (
+                                <div key={idx} className="flex items-center justify-between">
+                                    <p className="text-xs font-black text-slate-800">{u.name}</p>
+                                    <div className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded-md text-[10px] font-black">
+                                        {u.count} รายการ
+                                    </div>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+
+                    {/* Teachers Breakdown */}
+                    <Card className="border-none bg-white shadow-sm rounded-2xl">
+                        <CardHeader className="p-6">
+                            <CardTitle className="text-sm font-black uppercase tracking-wider text-slate-400">ครูที่เข้าร่วมนิเทศสูงสุด</CardTitle>
+                            <CardDescription className="text-xs font-bold">นับตามจำนวนครั้งที่ลงทะเบียนสำเร็จ</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-6 pt-0 space-y-4">
+                            {systemStats.breakdowns.teachers.map((t, idx) => (
+                                <div key={idx} className="flex items-center justify-between">
+                                    <div className="space-y-0.5">
+                                        <p className="text-xs font-black text-slate-800">{t.name}</p>
+                                        <p className="text-[10px] font-bold text-slate-400">{t.unit}</p>
+                                    </div>
+                                    <div className="px-2 py-1 bg-orange-50 text-orange-600 rounded-md text-[10px] font-black">
+                                        {t.count} ครั้ง
+                                    </div>
+                                </div>
+                            ))}
                         </CardContent>
                     </Card>
                 </div>
             </div>
         );
     }
+
 
     // Teacher / Default Dashboard
     return (
@@ -114,15 +188,15 @@ export default async function DashboardPage() {
                         <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-4 group-hover:scale-110 transition-transform duration-500">
                             <Calendar className="w-6 h-6" />
                         </div>
-                        <CardTitle className="text-xl font-bold">สำรวจหลักสูตร</CardTitle>
+                        <CardTitle className="text-xl font-bold">สำรวจหัวข้อนิเทศ</CardTitle>
                     </CardHeader>
                     <CardContent className="p-8 pt-0">
                         <p className="text-[13px] text-slate-500 mb-8 font-medium leading-relaxed">
-                            เรียนรู้และพัฒนาทักษะใหม่ๆ กับกิจกรรมการฝึกอบรมที่พร้อมให้คุณลงทะเบียนและก้าวไปข้างหน้า
+                            ยกระดับการจัดการเรียนรู้ ผ่านกระบวนการนิเทศที่สร้างสรรค์และนำไปใช้ได้จริง ร่วมแลกเปลี่ยนประสบการณ์ มุมมอง และรับการชี้แนะเพื่อเสริมสร้างความมั่นใจในการสอน
                         </p>
                         <Link href="/activities">
                             <button className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95">
-                                ดูรายการอบรม
+                                ดูตารางนัดหมายนิเทศ
                             </button>
                         </Link>
                     </CardContent>
@@ -137,7 +211,7 @@ export default async function DashboardPage() {
                     </CardHeader>
                     <CardContent className="p-8 pt-0">
                         <p className="text-[13px] text-slate-500 mb-8 font-medium leading-relaxed">
-                            อัปโหลดผลงานและติดตามสถานะการประเมินวิทยสถานะ รวมถึงรับข้อเสนอแนะเพื่อพัฒนาต่อยอด
+                            อัปโหลดผลงานและติดตามสถานะการประเมิน รวมถึงรับข้อเสนอแนะเพื่อพัฒนาต่อยอด
                         </p>
                         <Link href="/my-activities">
                             <button className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-200 transition-all active:scale-95">
@@ -152,15 +226,15 @@ export default async function DashboardPage() {
                         <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-orange-600 mb-4 group-hover:scale-110 transition-transform duration-500">
                             <GraduationCap className="w-6 h-6" />
                         </div>
-                        <CardTitle className="text-xl font-bold">ประกาศนียบัตร</CardTitle>
+                        <CardTitle className="text-xl font-bold">เกียรติบัตร</CardTitle>
                     </CardHeader>
                     <CardContent className="p-8 pt-0">
                         <p className="text-[13px] text-slate-500 mb-8 font-medium leading-relaxed">
-                            รวบรวมเกียรติบัตรและวุฒิบัตรอิเล็กทรอนิกส์ทั้งหมดที่คุณได้รับจากการเข้าร่วมกิจกรรมสำเร็จ
+                            รวบรวมเกียรติบัตรอิเล็กทรอนิกส์ทั้งหมดที่คุณได้รับจากการเข้าร่วมกิจกรรมสำเร็จ
                         </p>
                         <Link href="/my-certificates">
                             <button className="w-full py-3.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-200 transition-all active:scale-95">
-                                ตรวจสอบวุฒิบัตร
+                                ตรวจสอบเกียรติบัตร
                             </button>
                         </Link>
                     </CardContent>

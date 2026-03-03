@@ -100,7 +100,7 @@ export default async function AdminDashboardPage() {
                                     <Download className="w-5 h-5 text-emerald-600" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-slate-900 truncate">ออกวุฒิบัตรอิเล็กทรอนิกส์</p>
+                                    <p className="text-sm font-bold text-slate-900 truncate">ออกเกียรติบัตรอิเล็กทรอนิกส์</p>
                                     <p className="text-[11px] text-slate-400 font-black uppercase tracking-tight">3 ชั่วโมงที่ผ่านมา</p>
                                 </div>
                             </div>

@@ -20,9 +20,9 @@ export const registerSchema = z.object({
     province: z.string().min(2, "กรุณากรอกจังหวัด"),
     position: z.string().min(1, "กรุณาเลือกตำแหน่ง"),
     region: z.string().min(1, "กรุณาเลือกภาค"),
-    affiliation: z.enum(['Government', 'Private', 'Supervisor_Unit']),
+    affiliation: z.string().min(1, "กรุณาเลือกสังกัด"),
     academicStanding: z.string().min(1, "กรุณาเลือกวิทยฐานะ"),
-    teachingSubject: z.string().min(2, "กรุณากรอกวิชาที่สอน"),
+    teachingSubject: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "รหัสผ่านไม่ตรงกัน",
     path: ["confirmPassword"],

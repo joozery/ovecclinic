@@ -1,7 +1,9 @@
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true, // Use SSL
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -77,12 +79,14 @@ http://nitedx.vec.go.th`,
     };
 
     try {
+        console.log(`[MAIL] Sending notification to ${to} for activity: ${activityTitle}`);
         const info = await transporter.sendMail(mailOptions);
-        console.log("Email sent: " + info.response);
+        console.log(`[MAIL] Success: ${info.messageId} | Response: ${info.response}`);
         return { success: true, messageId: info.messageId };
-    } catch (error) {
-        console.error("Error sending email:", error);
-        throw error;
+    } catch (error: any) {
+        console.error(`[MAIL] Error sending to ${to}:`, error.message);
+        if (error.code) console.error(`[MAIL] Error Code: ${error.code}`);
+        return { success: false, error: error.message };
     }
 }
 
@@ -143,11 +147,13 @@ http://nitedx.vec.go.th`,
     };
 
     try {
+        console.log(`[MAIL] Sending welcome email to ${to}`);
         await transporter.sendMail(mailOptions);
+        console.log(`[MAIL] Welcome email sent successfully to ${to}`);
         return { success: true };
-    } catch (error) {
-        console.error("Error sending welcome email:", error);
-        throw error;
+    } catch (error: any) {
+        console.error(`[MAIL] Welcome email error for ${to}:`, error.message);
+        return { success: false, error: error.message };
     }
 }
 
@@ -177,10 +183,12 @@ export async function sendOTPEmail({
     };
 
     try {
+        console.log(`[MAIL] Sending OTP email to ${to}`);
         await transporter.sendMail(mailOptions);
+        console.log(`[MAIL] OTP email sent successfully to ${to}`);
         return { success: true };
-    } catch (error) {
-        console.error("Error sending OTP email:", error);
-        throw error;
+    } catch (error: any) {
+        console.error(`[MAIL] OTP email error for ${to}:`, error.message);
+        return { success: false, error: error.message };
     }
 }

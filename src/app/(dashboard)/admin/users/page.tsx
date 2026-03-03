@@ -2,6 +2,7 @@
 import { getUsers } from "@/actions/user";
 import { UserActions } from "@/components/admin/user-actions";
 import { SearchInput } from "@/components/search-input";
+import { UserTableClient } from "@/components/admin/user-table-client";
 import {
     Table,
     TableBody,
@@ -211,109 +212,7 @@ export default async function AdminUsersPage({
             </div>
 
             {/* Table */}
-            <Card className="border border-slate-200/60 bg-white/80 backdrop-blur-sm shadow-sm rounded-2xl overflow-hidden">
-                <CardContent className="p-0">
-                    <Table>
-                        <TableHeader className="bg-slate-50/80">
-                            <TableRow className="hover:bg-transparent border-slate-100">
-                                <TableHead className="font-black text-slate-700 h-14 pl-8 text-xs uppercase tracking-wider">ผู้ใช้งาน</TableHead>
-                                <TableHead className="font-black text-slate-700 h-14 text-xs uppercase tracking-wider">อีเมล</TableHead>
-                                <TableHead className="font-black text-slate-700 h-14 text-xs uppercase tracking-wider">บทบาท</TableHead>
-                                <TableHead className="font-black text-slate-700 h-14 text-xs uppercase tracking-wider">ช่องทางสมัคร</TableHead>
-                                <TableHead className="font-black text-slate-700 h-14 text-xs uppercase tracking-wider text-center">วันที่เข้าร่วม</TableHead>
-                                <TableHead className="font-black text-slate-700 h-14 text-xs uppercase tracking-wider text-right pr-8">จัดการ</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {users.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="h-40 text-center text-slate-400 font-medium">
-                                        ไม่พบข้อมูลผู้ใช้งานในหมวดหมู่นี้
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                users.map((user: any) => {
-                                    const providers = getProviders(user);
-
-                                    return (
-                                        <TableRow key={user._id} className="hover:bg-slate-50/60 transition-colors border-slate-50">
-
-                                            {/* Name */}
-                                            <TableCell className="py-4 pl-8">
-                                                <div className="flex items-center gap-3">
-                                                    <div suppressHydrationWarning className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center text-blue-700 font-black text-sm shrink-0">
-                                                        {user.name?.trim()?.[0]?.toUpperCase() || "?"}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-slate-900 text-sm leading-tight">{user.name}</p>
-                                                        {user.profile?.position && (
-                                                            <p className="text-[10px] text-slate-400 font-medium">{user.profile.position}</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </TableCell>
-
-                                            {/* Email */}
-                                            <TableCell className="py-4 text-sm text-slate-500 font-medium">{user.email}</TableCell>
-
-                                            {/* Role */}
-                                            <TableCell className="py-4">
-                                                <Badge variant="secondary" className={cn(
-                                                    "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                                    user.role === 'super_admin' ? 'bg-indigo-600 text-white' :
-                                                        user.role === 'admin' ? 'bg-blue-600 text-white' :
-                                                            user.role === 'supervisor' ? 'bg-orange-500 text-white' :
-                                                                'bg-slate-100 text-slate-600'
-                                                )}>
-                                                    {user.role === 'super_admin' ? 'ผู้ดูแลสูงสุด' :
-                                                        user.role === 'admin' ? 'ผู้ดูแลระบบ' :
-                                                            user.role === 'supervisor' ? 'ศึกษานิเทศก์' :
-                                                                'ครู / บุคลากร'}
-                                                </Badge>
-                                            </TableCell>
-
-                                            {/* Provider Badges */}
-                                            <TableCell className="py-4">
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {providers.map((p) => {
-                                                        const cfg = PROVIDERS[p] || PROVIDERS.credentials;
-                                                        return (
-                                                            <div
-                                                                key={p}
-                                                                className={cn(
-                                                                    "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold",
-                                                                    cfg.bg, cfg.text
-                                                                )}
-                                                            >
-                                                                <span className="flex-shrink-0">{cfg.icon}</span>
-                                                                {cfg.label}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </TableCell>
-
-                                            {/* Date */}
-                                            <TableCell suppressHydrationWarning className="py-4 text-xs text-slate-400 font-bold text-center">
-                                                {new Date(user.createdAt).toLocaleDateString('th-TH', {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric'
-                                                })}
-                                            </TableCell>
-
-                                            {/* Actions */}
-                                            <TableCell className="py-4 text-right pr-8">
-                                                <UserActions user={user} currentUserRole={session.user.role} />
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            <UserTableClient users={users} currentUserRole={session.user.role} />
 
             {/* Pagination */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">

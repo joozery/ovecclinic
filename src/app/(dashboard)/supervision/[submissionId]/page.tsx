@@ -5,6 +5,7 @@ import { CertificateActions } from "@/components/certificate/certificate-actions
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { th } from "date-fns/locale";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -189,7 +190,7 @@ export default async function ReviewPage({ params }: ReviewPageProps) {
 
                             <div className="pt-6 border-t border-slate-50 flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                                 <span>จัดส่งเมื่อ</span>
-                                <span>{format(new Date(submission.submittedAt), "dd MMMM yyyy, HH:mm น.")}</span>
+                                <span>{format(new Date(submission.submittedAt), "dd MMMM yyyy, HH:mm น.", { locale: th })}</span>
                             </div>
                         </CardContent>
                     </Card>

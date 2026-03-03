@@ -57,7 +57,7 @@ export function LoginForm() {
                 {/* Left Column: Digital ID / Socials */}
                 <div className="flex-1 p-6 md:p-8 space-y-6">
                     <div className="text-center md:text-left">
-                        <h2 className="text-lg font-bold text-slate-700 mb-1">เข้าสู่ระบบด้วย Digital D</h2>
+                        <h2 className="text-lg font-bold text-slate-700 mb-1">เข้าสู่ระบบด้วย ThaiD</h2>
                     </div>
 
                     <div className="space-y-4">
@@ -70,12 +70,12 @@ export function LoginForm() {
                                 <div className="w-8 h-8 relative flex items-center justify-center group-hover:scale-110 transition-transform duration-300 overflow-hidden rounded-md bg-white shadow-sm border border-slate-100">
                                     <Image
                                         src="/logo/thaiidlogo.png"
-                                        alt="Thai ID Logo"
+                                        alt="ThaiD Logo"
                                         fill
                                         className="object-cover"
                                     />
                                 </div>
-                                <span className="text-slate-700 font-black text-sm tracking-tight group-hover:text-indigo-600 transition-colors">แอปพลิเคชัน Thai ID</span>
+                                <span className="text-slate-700 font-black text-sm tracking-tight group-hover:text-indigo-600 transition-colors">แอปพลิเคชัน ThaiD</span>
                             </div>
                             <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50 group-hover:translate-x-1 transition-all">
                                 <LogIn className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-600" />

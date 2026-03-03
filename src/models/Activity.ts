@@ -8,7 +8,7 @@ const ActivitySchema = new mongoose.Schema({
     endTime: { type: Date, required: true },
     quota: { type: Number, required: true, min: 1 },
     location: { type: String, required: true },
-    targetBranch: { type: String }, // สาขาวิชาที่สอน
+    targetBranch: { type: String }, // สาขาวิชา
     meetingId: { type: String },
     meetingPassword: { type: String },
     bannerImage: { type: String },
@@ -24,6 +24,7 @@ const ActivitySchema = new mongoose.Schema({
         enum: ['Open', 'Full', 'Closed', 'Postponed'],
         default: 'Open',
     },
+    requirements: [String],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     // registrations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Registration' }], // Future use
 }, { timestamps: true });

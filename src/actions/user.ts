@@ -33,8 +33,20 @@ export async function updateProfile(formData: FormData) {
     const idCard = formData.get("idCard") as string;
     const province = formData.get("province") as string;
     const image = formData.get("image") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
 
     await dbConnect();
+
+    // Check if Email exists in another user
+    if (email) {
+        const existingUserWithEmail = await User.findOne({ email });
+        if (existingUserWithEmail && existingUserWithEmail._id.toString() !== session.user.id) {
+            return {
+                error: `อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น`
+            };
+        }
+    }
 
     // Check if ID Card exists in another user
     if (idCard) {
@@ -81,6 +93,12 @@ export async function updateProfile(formData: FormData) {
 
     if (idCard) updateData.idCard = idCard;
     if (image) updateData.image = image;
+    if (email) updateData.email = email;
+
+    if (password && password.trim().length >= 6) {
+        const bcrypt = await import("bcryptjs");
+        updateData.password = await bcrypt.hash(password, 10);
+    }
 
     await User.findByIdAndUpdate(session.user.id, updateData);
 
@@ -185,6 +203,118 @@ export async function getUsers({ query, page = 1, limit = 10, role, type, provid
     };
 }
 
+export async function getUserById(userId: string) {
+    const session = await auth();
+    if (!session || (session.user.role !== 'admin' && session.user.role !== 'super_admin')) {
+        throw new Error("Unauthorized");
+    }
+
+    await dbConnect();
+    const user = await User.findById(userId).select("-password");
+    if (!user) return null;
+
+    return JSON.parse(JSON.stringify(user));
+}
+
+export async function updateUserByAdmin(userId: string, formData: FormData) {
+    const session = await auth();
+    if (!session || (session.user.role !== 'admin' && session.user.role !== 'super_admin')) {
+        throw new Error("Unauthorized");
+    }
+
+    const prefixTH = formData.get("prefixTH") as string;
+    const firstNameTH = formData.get("firstNameTH") as string;
+    const lastNameTH = formData.get("lastNameTH") as string;
+    const prefixEN = formData.get("prefixEN") as string;
+    const firstNameEN = formData.get("firstNameEN") as string;
+    const lastNameEN = formData.get("lastNameEN") as string;
+
+    const birthDay = formData.get("birthDay") as string;
+    const birthMonth = formData.get("birthMonth") as string;
+    const birthYear = formData.get("birthYear") as string;
+
+    const teachingSubject = formData.get("teachingSubject") as string;
+    const phone = formData.get("phone") as string;
+    const college = formData.get("college") as string;
+    const position = formData.get("position") as string;
+    const region = formData.get("region") as string;
+    const affiliation = formData.get("affiliation") as string;
+    const academicStanding = formData.get("academicStanding") as string;
+    const idCard = formData.get("idCard") as string;
+    const province = formData.get("province") as string;
+    const image = formData.get("image") as string;
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+
+    await dbConnect();
+
+    // Check if Email exists in another user
+    if (email) {
+        const existingUserWithEmail = await User.findOne({ email });
+        if (existingUserWithEmail && existingUserWithEmail._id.toString() !== userId) {
+            return {
+                error: `อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น`
+            };
+        }
+    }
+
+    // Check if ID Card exists in another user
+    if (idCard) {
+        const existingUserWithIdCard = await User.findOne({ idCard });
+        if (existingUserWithIdCard && existingUserWithIdCard._id.toString() !== userId) {
+            return {
+                error: `เลขบัตรประชาชนนี้ถูกใช้งานแล้วโดยผู้ใช้อื่น`
+            };
+        }
+    }
+
+    // Combine Birth Date
+    let birthDate: Date | null = null;
+    if (birthDay && birthMonth && birthYear) {
+        birthDate = new Date(`${Number(birthYear) - 543}-${birthMonth}-${birthDay}`);
+    }
+
+    const updateData: any = {
+        name: `${firstNameTH} ${lastNameTH}`.trim(),
+        profile: {
+            prefixTH, firstNameTH, lastNameTH,
+            prefixEN, firstNameEN, lastNameEN,
+            birthDate,
+            phone,
+            college,
+            position,
+            region,
+            province,
+            affiliation,
+            academicStanding,
+            teachingSubject,
+        },
+    };
+
+    if (idCard) updateData.idCard = idCard;
+    if (image) updateData.image = image;
+    if (email) updateData.email = email;
+
+    if (password && password.trim().length >= 6) {
+        const bcrypt = await import("bcryptjs");
+        updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    const targetUser = await User.findById(userId);
+    if (!targetUser) throw new Error("User not found");
+
+    // Only super_admin can modify other super_admins/admins
+    if ((targetUser.role === 'super_admin' || targetUser.role === 'admin') && session.user.role !== 'super_admin') {
+        throw new Error("Only Super Admin can modify admin profiles");
+    }
+
+    await User.findByIdAndUpdate(userId, updateData);
+
+    revalidatePath("/admin/users");
+    return { success: true };
+}
+
+
 export async function updateUserRole(userId: string, newRole: string) {
     const session = await auth();
     if (!session) {
@@ -237,6 +367,63 @@ export async function deleteUser(userId: string) {
     }
 
     await User.findByIdAndDelete(userId);
+
+    revalidatePath("/admin/users");
+    return { success: true };
+}
+
+export async function bulkUpdateUserRole(userIds: string[], newRole: string) {
+    const session = await auth();
+    if (!session) throw new Error("Unauthorized");
+
+    const currentUser = session.user;
+    if (currentUser.role !== 'admin' && currentUser.role !== 'super_admin') {
+        throw new Error("Unauthorized");
+    }
+
+    await dbConnect();
+
+    const targetUsers = await User.find({ _id: { $in: userIds } });
+
+    // Only super_admin can modify other super_admins
+    for (const targetUser of targetUsers) {
+        if (targetUser.role === 'super_admin' && currentUser.role !== 'super_admin') {
+            throw new Error("Only Super Admin can modify other Super Admins");
+        }
+    }
+
+    await User.updateMany({ _id: { $in: userIds } }, { role: newRole });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+}
+
+export async function bulkDeleteUsers(userIds: string[]) {
+    const session = await auth();
+    if (!session) throw new Error("Unauthorized");
+
+    const currentUser = session.user;
+    if (currentUser.role !== 'admin' && currentUser.role !== 'super_admin') {
+        throw new Error("Unauthorized");
+    }
+
+    // Cannot delete yourself
+    if (userIds.includes(currentUser.id!)) {
+        throw new Error("Cannot delete your own account");
+    }
+
+    await dbConnect();
+
+    const targetUsers = await User.find({ _id: { $in: userIds } });
+
+    // Only super_admin can delete other admins/super_admins
+    for (const targetUser of targetUsers) {
+        if ((targetUser.role === 'super_admin' || targetUser.role === 'admin') && currentUser.role !== 'super_admin') {
+            throw new Error("Only Super Admin can delete admin accounts");
+        }
+    }
+
+    await User.deleteMany({ _id: { $in: userIds } });
 
     revalidatePath("/admin/users");
     return { success: true };

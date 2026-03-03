@@ -97,6 +97,12 @@ export function Sidebar() {
             active: pathname === "/admin/issues",
         },
         {
+            label: "จัดการคู่มือใช้งาน",
+            icon: BookOpen,
+            href: "/admin/manual",
+            active: pathname === "/admin/manual",
+        },
+        {
             label: "ตั้งค่าระบบ",
             icon: Settings,
             href: "/admin/settings",

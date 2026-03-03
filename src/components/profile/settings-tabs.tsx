@@ -40,7 +40,7 @@ export function SettingsTabs({
     const providerConfig: Record<string, { name: string, iconType: "svg" | "image", iconSrc?: string, color: string }> = {
         google: { name: "Google Account", iconType: "svg", color: "text-blue-600" },
         line: { name: "LINE Application", iconType: "image", iconSrc: "/logo/logoline.png", color: "text-[#06C755]" },
-        thaid: { name: "ThaiID Application", iconType: "image", iconSrc: "/logo/thaiidlogo.png", color: "text-indigo-600" },
+        thaid: { name: "ThaiD", iconType: "image", iconSrc: "/logo/thaiidlogo.png", color: "text-indigo-600" },
     };
 
     return (

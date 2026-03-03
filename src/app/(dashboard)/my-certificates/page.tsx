@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Award, ExternalLink, Search, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { th } from "date-fns/locale";
 import { auth } from "@/auth";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -87,7 +88,8 @@ export default async function MyCertificatesPage({ searchParams }: { searchParam
                                 </CardTitle>
                                 <div className="flex items-center gap-2 mt-4">
                                     <Badge className="bg-emerald-50 text-emerald-600 hover:bg-emerald-50 border-none px-3 py-1 rounded-lg text-[10px] font-bold">
-                                        ออกให้เมื่อ {format(new Date(cert.issuedAt), "dd MMM yyyy")}
+                                        ออกให้เมื่อ {format(new Date(cert.issuedAt), "d MMM ", { locale: th })}
+                                        {new Date(cert.issuedAt).getFullYear() + 543}
                                     </Badge>
                                 </div>
                             </CardHeader>
@@ -137,11 +139,11 @@ export default async function MyCertificatesPage({ searchParams }: { searchParam
                         </div>
                         <h3 className="text-2xl font-black text-slate-900 mb-3">ยังไม่พบเกียรติบัตรของคุณ</h3>
                         <p className="text-slate-500 font-medium mb-10 max-w-sm text-center leading-relaxed">
-                            เริ่มลงทะเบียนเรียนและส่งผลงานเพื่อให้ผ่านการประเมินวิทยฐานะ แล้วเกียรติบัตรจะปรากฏที่นี่ครับ
+                            ลงทะเบียนเข้ารับการนิเทศและส่งผลงาน เมื่อได้รับการอนุมัติแล้ว เกียรติบัตรจะปรากฏที่นี่ครับ
                         </p>
                         <Link href="/activities">
                             <button className="flex items-center gap-3 px-8 py-4 bg-[#1a237e] hover:bg-[#151b60] text-white rounded-2xl font-black text-sm shadow-xl shadow-blue-200 transition-all active:scale-95">
-                                <Calendar className="w-4 h-4" /> เลือกหลักสูตรที่น่าสนใจ
+                                <Calendar className="w-4 h-4" /> เลือกหัวข้อที่ท่านสนใจ
                             </button>
                         </Link>
                     </div>

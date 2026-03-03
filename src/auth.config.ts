@@ -14,24 +14,25 @@ export default {
             checks: ["pkce", "state", "nonce"],
             authorization: {
                 params: {
-                    scope: "openid profile pid",
+                    scope: "openid pid title given_name family_name title_en given_name_en family_name_en gender birthdate",
                 },
             },
             profile(profile) {
                 console.log("ThaiD Raw Profile Received FULL:", JSON.stringify(profile, null, 2));
                 return {
-                    id: profile.sub || profile.pid,
-                    name: profile.name || `${profile.given_name || profile.th_fname} ${profile.family_name || profile.th_lname}`,
-                    email: profile.email || `${profile.sub || profile.pid}@thaid.go.th`,
+                    id: profile.pid || profile.sub,
+                    name: `${profile.title || ""}${profile.given_name || ""} ${profile.family_name || ""}`.trim(),
+                    email: profile.email || `${profile.pid || profile.sub}@thaid.go.th`,
                     image: profile.picture,
                     idCard: profile.pid || profile.sub,
-                    firstNameTH: profile.given_name || profile.th_fname,
-                    lastNameTH: profile.family_name || profile.th_lname,
-                    firstNameEN: profile.given_name_en || profile.en_fname,
-                    lastNameEN: profile.family_name_en || profile.en_lname,
-                    prefixTH: profile.title || profile.th_title,
-                    prefixEN: profile.title_en || profile.en_title,
-                    birthdate: profile.birthdate,
+                    firstNameTH: profile.given_name || "",
+                    lastNameTH: profile.family_name || "",
+                    firstNameEN: profile.given_name_en || "",
+                    lastNameEN: profile.family_name_en || "",
+                    prefixTH: profile.title || "",
+                    prefixEN: profile.title_en || "",
+                    birthdate: profile.birthdate || "",
+                    gender: profile.gender === "male" || profile.gender === "1" ? "ชาย" : profile.gender === "female" || profile.gender === "2" ? "หญิง" : (profile.gender || ""),
                     role: "teacher",
                     isProfileComplete: false,
                 }
@@ -98,6 +99,7 @@ export default {
                 (token as any).prefixTH = (user as any).prefixTH;
                 (token as any).prefixEN = (user as any).prefixEN;
                 (token as any).birthdate = (user as any).birthdate;
+                (token as any).gender = (user as any).gender;
                 (token as any).position = (user as any).position;
                 if (user.image) token.picture = user.image;
                 if (user.image) (token as any).image = user.image;
@@ -117,6 +119,7 @@ export default {
                 (session.user as any).prefixTH = token.prefixTH as string;
                 (session.user as any).prefixEN = token.prefixEN as string;
                 (session.user as any).birthdate = token.birthdate as string;
+                (session.user as any).gender = token.gender as string;
                 (session.user as any).position = token.position as string;
                 if (token.picture) session.user.image = token.picture as string;
                 else if ((token as any).image) session.user.image = (token as any).image as string;

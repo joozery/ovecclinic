@@ -35,7 +35,7 @@ export function StatsCards({ data }: StatsCardsProps) {
                     <Activity className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-black text-slate-900">{data.activities.toLocaleString()}</div>
+                    <div className="text-2xl font-black text-slate-900">{(data?.activities || 0).toLocaleString()}</div>
                     <p className="text-[10px] font-bold text-slate-400 mt-1">
                         หลักสูตรทั้งหมดในระบบ
                     </p>
@@ -48,12 +48,12 @@ export function StatsCards({ data }: StatsCardsProps) {
                     <Users className="h-4 w-4 text-emerald-600" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-black text-slate-900">{data.registrations.toLocaleString()}</div>
+                    <div className="text-2xl font-black text-slate-900">{(data?.registrations || 0).toLocaleString()}</div>
                     <p className={cn(
                         "text-[10px] font-bold mt-1 flex items-center gap-1",
-                        data.trends.registrations >= 0 ? "text-emerald-500" : "text-red-500"
+                        (data?.trends?.registrations || 0) >= 0 ? "text-emerald-500" : "text-red-500"
                     )}>
-                        {data.trends.registrations >= 0 ? "+" : ""}{data.trends.registrations}% เทียบกับเดือนก่อน
+                        {(data?.trends?.registrations || 0) >= 0 ? "+" : ""}{data?.trends?.registrations || 0}% เทียบกับเดือนก่อน
                     </p>
                 </CardContent>
             </Card>
@@ -64,9 +64,9 @@ export function StatsCards({ data }: StatsCardsProps) {
                     <FileCheck className="h-4 w-4 text-orange-600" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-black text-slate-900">{data.certificates.toLocaleString()}</div>
+                    <div className="text-2xl font-black text-slate-900">{(data?.certificates || 0).toLocaleString()}</div>
                     <p className="text-[10px] font-bold text-slate-400 mt-1">
-                        ปีงบประมาณ {data.fiscal.year}: {data.fiscal.registrations} ราย
+                        ปีงบประมาณ {data?.fiscal?.year || "-"}: {data?.fiscal?.registrations || 0} ราย
                     </p>
                 </CardContent>
             </Card>
@@ -77,11 +77,11 @@ export function StatsCards({ data }: StatsCardsProps) {
                     <div className="h-4 w-4 rounded-full border-2 border-purple-200 border-t-purple-600 animate-[spin_3s_linear_infinite]" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-black text-slate-900">{data.participationRate}%</div>
+                    <div className="text-2xl font-black text-slate-900">{data?.participationRate || 0}%</div>
                     <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
                         <div
                             className="h-full bg-purple-500 rounded-full transition-all duration-1000"
-                            style={{ width: `${data.participationRate}%` }}
+                            style={{ width: `${data?.participationRate || 0}%` }}
                         />
                     </div>
                 </CardContent>
@@ -93,7 +93,7 @@ export function StatsCards({ data }: StatsCardsProps) {
                     <GraduationCap className="h-4 w-4 text-slate-600" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-black text-slate-900">{data.supervisors.toLocaleString()}</div>
+                    <div className="text-2xl font-black text-slate-900">{(data?.supervisors || 0).toLocaleString()}</div>
                     <p className="text-[10px] font-bold text-slate-400 mt-1">
                         ที่ทำการนิเทศในระบบ
                     </p>

@@ -25,6 +25,9 @@ export function Navbar({ isLoggedIn }: NavbarProps) {
                     </Link>
 
                     <div className="hidden md:flex items-center gap-8">
+                        <Link href="/manual" className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">
+                            คู่มือการใช้งาน
+                        </Link>
                         {isLoggedIn ? (
                             <Link href="/dashboard">
                                 <Button className="bg-[#1a237e] hover:bg-[#151b60] text-sm font-bold px-8 h-10 rounded-full shadow-lg shadow-indigo-100 transition-all">ไปยัง Dashboard</Button>
@@ -41,7 +44,10 @@ export function Navbar({ isLoggedIn }: NavbarProps) {
                         )}
                     </div>
 
-                    <div className="md:hidden">
+                    <div className="md:hidden flex items-center gap-4">
+                        <Link href="/manual" className="text-xs font-bold text-slate-600">
+                            คู่มือ
+                        </Link>
                         <Link href="/login">
                             <Button className="bg-[#1a237e] h-10 px-6 rounded-full font-bold text-xs">เริ่มต้น</Button>
                         </Link>

@@ -42,7 +42,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import { Phone, School, UserCircle, MapPinned, Building2, Loader2, GraduationCap, IdCard, Camera, Check, ChevronsUpDown } from "lucide-react";
+import { Phone, School, UserCircle, MapPinned, Building2, Loader2, GraduationCap, IdCard, Camera, Check, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const provinces = [
@@ -66,13 +66,15 @@ const provinces = [
 
 const formSchema = z.object({
     name: z.string().min(2, "กรุณากรอกชื่อ-นามสกุลจริง"),
+    email: z.string().email("กรุณากรอกอีเมลที่ถูกต้อง"),
+    password: z.string().min(6, "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร").or(z.literal("")).optional(),
     idCard: z.string().length(13, "หมายเลขบัตรประชาชนต้องมี 13 หลัก"),
     phone: z.string().min(10, "กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง"),
     college: z.string().min(2, "กรุณากรอกชื่อสถานศึกษา"),
     province: z.string().min(2, "กรุณากรอกจังหวัด"),
     position: z.string().min(1, "กรุณาเลือกตำแหน่ง"),
     region: z.string().min(1, "กรุณาเลือกภาค"),
-    affiliation: z.enum(['Government', 'Private', 'Supervisor_Unit']),
+    affiliation: z.string().min(1, "กรุณาเลือกสังกัด"),
     academicStanding: z.string().min(1, "กรุณาเลือกวิทยฐานะ"),
 });
 
@@ -82,19 +84,22 @@ export function OnboardingForm() {
     const { data: session, update } = useSession();
     const [imageUrl, setImageUrl] = useState<string | null>(session?.user?.image || null);
     const [isUploading, setIsUploading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: session?.user?.name || "",
+            email: session?.user?.email?.includes("@thaid.go.th") ? "" : session?.user?.email || "",
+            password: "",
             idCard: (session?.user as any)?.idCard || "",
             phone: "",
             college: "",
             province: "",
             position: "",
             region: "Central",
-            affiliation: "Government",
+            affiliation: "สถานศึกษาภาครัฐ",
             academicStanding: "ไม่มี",
         },
     });
@@ -268,6 +273,22 @@ export function OnboardingForm() {
 
                                 <FormField
                                     control={form.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-1.5">
+                                            <FormLabel className="text-slate-500 font-medium text-[11px] ml-1 flex items-center gap-1.5">
+                                                อีเมล
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input type="email" placeholder="example@email.com" {...field} className="h-11 px-4 rounded-xl border-none bg-[#f1f5fa] focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold text-[13px]" />
+                                            </FormControl>
+                                            <FormMessage className="text-[10px] font-bold" />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
                                     name="phone"
                                     render={({ field }) => (
                                         <FormItem className="space-y-1.5">
@@ -276,6 +297,27 @@ export function OnboardingForm() {
                                             </FormLabel>
                                             <FormControl>
                                                 <Input placeholder="เช่น 0812345678" {...field} className="h-11 px-4 rounded-xl border-none bg-[#f1f5fa] focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold text-[13px]" />
+                                            </FormControl>
+                                            <FormMessage className="text-[10px] font-bold" />
+                                        </FormItem>
+                                    )}
+                                />
+
+                                <FormField
+                                    control={form.control}
+                                    name="password"
+                                    render={({ field }) => (
+                                        <FormItem className="space-y-1.5 md:col-span-2">
+                                            <FormLabel className="text-slate-500 font-medium text-[11px] ml-1">
+                                                ตั้งรหัสผ่าน <span className="text-[9px] text-slate-400 font-normal">(กรอกหากต้องการใช้เข้าสู่ระบบด้วยอีเมลในภายหลัง)</span>
+                                            </FormLabel>
+                                            <FormControl>
+                                                <div className="relative">
+                                                    <Input type={showPassword ? "text" : "password"} placeholder="รหัสผ่านอย่างน้อย 6 ตัวอักษร (ไม่บังคับ)" {...field} className="h-11 px-4 pr-10 rounded-xl border-none bg-[#f1f5fa] focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold text-[13px]" />
+                                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-blue-500 transition-colors">
+                                                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                    </button>
+                                                </div>
                                             </FormControl>
                                             <FormMessage className="text-[10px] font-bold" />
                                         </FormItem>
@@ -295,7 +337,7 @@ export function OnboardingForm() {
                                     render={({ field }) => (
                                         <FormItem className="space-y-1.5">
                                             <FormLabel className="text-slate-500 font-medium text-[11px] ml-1">
-                                                ชื่อสถานศึกษา
+                                                ชื่อสถานศึกษา/หน่วยงาน
                                             </FormLabel>
                                             <FormControl>
                                                 <Input placeholder="เช่น วิทยาลัยเทคนิค..." {...field} className="h-11 px-4 rounded-xl border-none bg-[#f1f5fa] focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold text-[13px]" />
@@ -464,9 +506,17 @@ export function OnboardingForm() {
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent className="rounded-xl border-slate-100 shadow-xl">
-                                                    <SelectItem value="Government" className="font-bold py-3 px-4">รัฐบาล (อาชีวศึกษา)</SelectItem>
-                                                    <SelectItem value="Private" className="font-bold py-3 px-4">เอกชน</SelectItem>
-                                                    <SelectItem value="Supervisor_Unit" className="font-bold py-3 px-4">หน่วยศึกษานิเทศก์</SelectItem>
+                                                    <SelectItem value="สถานศึกษาภาครัฐ" className="font-bold py-3 px-4">สถานศึกษาภาครัฐ</SelectItem>
+                                                    <SelectItem value="สถานศึกษาภาคเอกชน" className="font-bold py-3 px-4">สถานศึกษาภาคเอกชน</SelectItem>
+                                                    <SelectItem value="สถานศึกษาที่ไม่ได้สังกัด สอศ." className="font-bold py-3 px-4">สถานศึกษาที่ไม่ได้สังกัด สอศ.</SelectItem>
+                                                    <SelectItem value="หน่วยศึกษานิเทศก์" className="font-bold py-3 px-4">หน่วยศึกษานิเทศก์</SelectItem>
+                                                    <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้</SelectItem>
+                                                    <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคเหนือ" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคเหนือ</SelectItem>
+                                                    <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคกลาง" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคกลาง</SelectItem>
+                                                    <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้ (จชต.)" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้ (จชต.)</SelectItem>
+                                                    <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกเฉียงเหนือ" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกเฉียงเหนือ</SelectItem>
+                                                    <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกและกรุงเทพมหานคร" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกและกรุงเทพมหานคร</SelectItem>
+                                                    <SelectItem value="อื่น ๆ" className="font-bold py-3 px-4">อื่น ๆ</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage className="text-[10px] font-bold" />

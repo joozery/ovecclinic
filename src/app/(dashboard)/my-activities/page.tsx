@@ -56,7 +56,7 @@ export default async function MyActivitiesPage() {
                 </div>
                 <Link href="/activities">
                     <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95">
-                        ค้นหากิจกรรมเพิ่มเติม
+                        สำรวจกิจกรรม
                     </button>
                 </Link>
             </div>
@@ -172,7 +172,7 @@ export default async function MyActivitiesPage() {
                         <p className="text-sm font-medium mb-8">คุณยังไม่ได้ลงทะเบียนเข้าร่วมกิจกรรมใดๆ ในขณะนี้</p>
                         <Link href="/activities">
                             <button className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-slate-50 text-slate-900 border border-slate-200 rounded-2xl font-bold text-sm shadow-sm transition-all active:scale-95">
-                                สำรวจกิจกรรมการอบรม
+                                สำรวจกิจกรรม
                             </button>
                         </Link>
                     </div>

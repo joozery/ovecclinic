@@ -74,14 +74,15 @@ const profileFormSchema = z.object({
     birthMonth: z.string().min(1, "เลือกเดือน"),
     birthYear: z.string().min(1, "เลือกปี"),
     idCard: z.string().length(13, "หมายเลขบัตรประชาชนต้องมี 13 หลัก"),
+    email: z.string().email("กรุณากรอกอีเมลที่ถูกต้อง"),
     phone: z.string().min(10, "กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง"),
     college: z.string().min(2, "กรุณากรอกชื่อสถานศึกษา"),
     province: z.string().min(2, "กรุณากรอกจังหวัด"),
     position: z.string().min(1, "กรุณาเลือกตำแหน่ง"),
     region: z.string().min(1, "กรุณาเลือกภาค"),
-    affiliation: z.enum(['Government', 'Private', 'Supervisor_Unit']),
+    affiliation: z.string().min(1, "กรุณาเลือกสังกัด"),
     academicStanding: z.string().min(1, "กรุณาเลือกวิทยฐานะ"),
-    teachingSubject: z.string().min(2, "กรุณาระบุกลุ่มสาระเทคนิค/วิชาที่สอน"),
+    teachingSubject: z.string().min(2, "กรุณาระบุกลุ่มสาระเทคนิค/สาขาวิชา"),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -90,6 +91,7 @@ interface ProfileFormProps {
     user: {
         name: string;
         image?: string | null;
+        email?: string;
         idCard?: string;
         prefixTH?: string;
         firstNameTH?: string;
@@ -105,7 +107,7 @@ interface ProfileFormProps {
         province?: string;
         position?: string;
         region?: string;
-        affiliation?: 'Government' | 'Private' | 'Supervisor_Unit';
+        affiliation?: string;
         academicStanding?: string;
         teachingSubject?: string;
     }
@@ -131,13 +133,14 @@ export function ProfileForm({ user }: ProfileFormProps) {
             birthDay: user?.birthDay || "",
             birthMonth: user?.birthMonth || "",
             birthYear: user?.birthYear || "",
+            email: user?.email || "",
             idCard: user?.idCard || "",
             phone: user?.phone || "",
             college: user?.college || "",
             province: user?.province || "",
             position: user?.position || "",
             region: user?.region || "Central",
-            affiliation: user?.affiliation || "Government",
+            affiliation: user?.affiliation || "สถานศึกษาภาครัฐ",
             academicStanding: user?.academicStanding || "ไม่มี",
             teachingSubject: user?.teachingSubject || "",
         },
@@ -199,7 +202,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 
                 // Update client session immediately
                 await update({
-                    name: `${data.prefixTH} ${data.firstNameTH} ${data.lastNameTH}`,
+                    name: `${data.prefixTH}${data.firstNameTH} ${data.lastNameTH}`,
                     position: data.position,
                     image: imageUrl
                 });
@@ -473,11 +476,24 @@ export function ProfileForm({ user }: ProfileFormProps) {
                         />
                         <FormField
                             control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel className="text-xs font-black text-slate-500">อีเมล</FormLabel>
+                                    <FormControl>
+                                        <Input type="email" placeholder="example@email.com" className="h-11 rounded-xl border-slate-200" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
                             name="teachingSubject"
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel className="text-xs font-black text-slate-500 flex items-center gap-2">
-                                        <GraduationCap className="w-3 h-3 text-blue-600" /> วิชาที่สอน
+                                        <GraduationCap className="w-3 h-3 text-blue-600" /> สาขาวิชา
                                     </FormLabel>
                                     <FormControl>
                                         <Input placeholder="เช่น คอมพิวเตอร์ธุรกิจ" className="h-11 rounded-xl border-slate-200" {...field} />
@@ -498,7 +514,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                 name="college"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel className="text-xs font-black text-slate-500">ชื่อสถานศึกษา</FormLabel>
+                                        <FormLabel className="text-xs font-black text-slate-500">ชื่อสถานศึกษา/หน่วยงาน</FormLabel>
                                         <FormControl>
                                             <Input placeholder="สังกัดสถานศึกษา" className="h-11 rounded-xl border-slate-200" {...field} />
                                         </FormControl>
@@ -526,6 +542,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                                 <SelectItem value="รองผู้อำนวยการ">รองผู้อำนวยการ</SelectItem>
                                                 <SelectItem value="ผู้อำนวยการ">ผู้อำนวยการ</SelectItem>
                                                 <SelectItem value="ศึกษานิเทศก์">ศึกษานิเทศก์</SelectItem>
+                                                <SelectItem value="อื่นๆ">อื่นๆ</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />
@@ -642,9 +659,17 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="Government">สถานศึกษาภาครัฐ</SelectItem>
-                                                <SelectItem value="Private">สถานศึกษาภาคเอกชน</SelectItem>
-                                                <SelectItem value="Supervisor_Unit">หน่วยงานศึกษานิเทศก์</SelectItem>
+                                                <SelectItem value="สถานศึกษาภาครัฐ">สถานศึกษาภาครัฐ</SelectItem>
+                                                <SelectItem value="สถานศึกษาภาคเอกชน">สถานศึกษาภาคเอกชน</SelectItem>
+                                                <SelectItem value="สถานศึกษาที่ไม่ได้สังกัด สอศ.">สถานศึกษาที่ไม่ได้สังกัด สอศ.</SelectItem>
+                                                <SelectItem value="หน่วยศึกษานิเทศก์">หน่วยศึกษานิเทศก์</SelectItem>
+                                                <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้</SelectItem>
+                                                <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคเหนือ">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคเหนือ</SelectItem>
+                                                <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคกลาง">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคกลาง</SelectItem>
+                                                <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้ (จชต.)">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้ (จชต.)</SelectItem>
+                                                <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกเฉียงเหนือ">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกเฉียงเหนือ</SelectItem>
+                                                <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกและกรุงเทพมหานคร">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกและกรุงเทพมหานคร</SelectItem>
+                                                <SelectItem value="อื่น ๆ">อื่น ๆ</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />

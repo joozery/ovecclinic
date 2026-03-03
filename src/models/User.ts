@@ -38,10 +38,7 @@ const UserSchema = new mongoose.Schema({
             type: String,
             enum: ['North', 'South', 'Central', 'Northeast', 'East_Bangkok'],
         },
-        affiliation: {
-            type: String,
-            enum: ['Government', 'Private', 'Supervisor_Unit'],
-        },
+        affiliation: String,
         academicStanding: String,
         teachingSubject: String,
     },

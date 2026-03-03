@@ -125,16 +125,16 @@ export function RegisterForm() {
     const form = useForm<z.infer<typeof registerSchema>>({
         resolver: zodResolver(registerSchema),
         defaultValues: {
-            email: session?.user?.email || "",
+            email: session?.user?.email && !session.user.email.includes("@thaid.go.th") ? session.user.email : "",
             password: "",
             confirmPassword: "",
-            idCard: (session?.user as any)?.idCard || "",
-            prefixTH: "",
-            firstNameTH: (session?.user as any)?.firstNameTH || "",
-            lastNameTH: (session?.user as any)?.lastNameTH || "",
-            prefixEN: "",
-            firstNameEN: "",
-            lastNameEN: "",
+            idCard: (session?.user as any)?.idCard || (session?.user as any)?.pid || "",
+            prefixTH: (session?.user as any)?.prefixTH || (session?.user as any)?.title || "",
+            firstNameTH: (session?.user as any)?.firstNameTH || (session?.user as any)?.given_name || "",
+            lastNameTH: (session?.user as any)?.lastNameTH || (session?.user as any)?.family_name || "",
+            prefixEN: (session?.user as any)?.prefixEN || (session?.user as any)?.title_en || "",
+            firstNameEN: (session?.user as any)?.firstNameEN || (session?.user as any)?.given_name_en || "",
+            lastNameEN: (session?.user as any)?.lastNameEN || (session?.user as any)?.family_name_en || "",
             birthDay: "",
             birthMonth: "",
             birthYear: "",
@@ -143,7 +143,7 @@ export function RegisterForm() {
             province: "",
             position: "",
             region: "Central",
-            affiliation: "Government",
+            affiliation: "สถานศึกษาภาครัฐ",
             academicStanding: "ไม่มี",
             teachingSubject: "",
         },
@@ -153,24 +153,55 @@ export function RegisterForm() {
     useEffect(() => {
         console.log("RegisterForm Session Object:", session);
         if (session?.user) {
-            form.setValue("email", session.user.email || "");
-            form.setValue("idCard", (session.user as any).idCard || "");
-            form.setValue("firstNameTH", (session.user as any).firstNameTH || "");
-            form.setValue("lastNameTH", (session.user as any).lastNameTH || "");
-            form.setValue("firstNameEN", (session.user as any).firstNameEN || "");
-            form.setValue("lastNameEN", (session.user as any).lastNameEN || "");
-            form.setValue("prefixTH", (session.user as any).prefixTH || "");
-            form.setValue("prefixEN", (session.user as any).prefixEN || "");
+            console.log("Setting form values from session user:", {
+                idCard: (session.user as any).idCard,
+                firstNameTH: (session.user as any).firstNameTH,
+                lastNameTH: (session.user as any).lastNameTH,
+                firstNameEN: (session.user as any).firstNameEN,
+                lastNameEN: (session.user as any).lastNameEN,
+                prefixTH: (session.user as any).prefixTH,
+                prefixEN: (session.user as any).prefixEN,
+                birthdate: (session.user as any).birthdate,
+                gender: (session.user as any).gender,
+            });
 
-            const bdate = (session.user as any).birthdate;
+            form.setValue("idCard", (session.user as any).idCard || (session.user as any).pid || (session.user as any).pid_no || "");
+
+            // Comprehensive Name Pre-fill
+            const fNameTH = (session.user as any).firstNameTH || (session.user as any).given_name || (session.user as any).th_fname || "";
+            const lNameTH = (session.user as any).lastNameTH || (session.user as any).family_name || (session.user as any).th_lname || "";
+            const fNameEN = (session.user as any).firstNameEN || (session.user as any).given_name_en || (session.user as any).en_fname || "";
+            const lNameEN = (session.user as any).lastNameEN || (session.user as any).family_name_en || (session.user as any).en_lname || "";
+
+            form.setValue("firstNameTH", fNameTH);
+            form.setValue("lastNameTH", lNameTH);
+            form.setValue("firstNameEN", fNameEN);
+            form.setValue("lastNameEN", lNameEN);
+
+            // Prefix Logic (Often ThaiID returns full names or specific titles)
+            const pfixTH = (session.user as any).prefixTH || (session.user as any).title || (session.user as any).th_title || "";
+            const pfixEN = (session.user as any).prefixEN || (session.user as any).title_en || (session.user as any).en_title || "";
+
+            if (pfixTH) {
+                if (pfixTH.includes("นาย")) form.setValue("prefixTH", "นาย");
+                else if (pfixTH.includes("นางสาว")) form.setValue("prefixTH", "นางสาว");
+                else if (pfixTH.includes("นาง")) form.setValue("prefixTH", "นาง");
+            }
+            if (pfixEN) {
+                if (pfixEN.toLowerCase().includes("mr")) form.setValue("prefixEN", "Mr.");
+                else if (pfixEN.toLowerCase().includes("mrs")) form.setValue("prefixEN", "Mrs.");
+                else if (pfixEN.toLowerCase().includes("ms")) form.setValue("prefixEN", "Ms.");
+            }
+
+            const bdate = (session.user as any).birthdate || (session.user as any).birth_date || (session.user as any).birthDate;
             if (bdate) {
                 let y, m, d;
-                if (bdate.includes("-")) {
-                    [y, m, d] = bdate.split("-");
-                } else if (bdate.length === 8) {
-                    y = bdate.substring(0, 4);
-                    m = bdate.substring(4, 6);
-                    d = bdate.substring(6, 8);
+                if (String(bdate).includes("-")) {
+                    [y, m, d] = String(bdate).split("-");
+                } else if (String(bdate).length === 8) {
+                    y = String(bdate).substring(0, 4);
+                    m = String(bdate).substring(4, 6);
+                    d = String(bdate).substring(6, 8);
                 }
 
                 if (y && m && d) {
@@ -464,57 +495,55 @@ export function RegisterForm() {
                                         />
                                     </div>
 
-                                    {!isSocialLogin && (
-                                        <>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                <FormField
-                                                    control={form.control}
-                                                    name="password"
-                                                    render={({ field }) => (
-                                                        <FormItem className="space-y-3">
-                                                            <FormLabel className="text-slate-800 font-black text-sm">รหัสผ่าน <span className="text-red-500">*</span></FormLabel>
-                                                            <FormControl>
-                                                                <div className="relative group">
-                                                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                                        <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                                                                    </div>
-                                                                    <Input type={showPassword ? "text" : "password"} {...field} className="h-12 pl-12 pr-12 rounded-xl border-slate-200 bg-white text-slate-900 font-black focus:border-blue-500 focus:ring-blue-500/10 transition-all" />
-                                                                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-blue-500 transition-colors">
-                                                                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                                                    </button>
+                                    <>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                            <FormField
+                                                control={form.control}
+                                                name="password"
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-3">
+                                                        <FormLabel className="text-slate-800 font-black text-sm">รหัสผ่าน <span className="text-red-500">*</span></FormLabel>
+                                                        <FormControl>
+                                                            <div className="relative group">
+                                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                                    <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                                                                 </div>
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="confirmPassword"
-                                                    render={({ field }) => (
-                                                        <FormItem className="space-y-3">
-                                                            <FormLabel className="text-slate-800 font-black text-sm">ยืนยันรหัสผ่าน <span className="text-red-500">*</span></FormLabel>
-                                                            <FormControl>
-                                                                <div className="relative group">
-                                                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                                        <ShieldCheck className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
-                                                                    </div>
-                                                                    <Input type={showPassword ? "text" : "password"} {...field} className="h-12 pl-12 pr-4 rounded-xl border-slate-200 bg-white text-slate-900 font-black focus:border-blue-500 focus:ring-blue-500/10 transition-all" />
+                                                                <Input type={showPassword ? "text" : "password"} {...field} className="h-12 pl-12 pr-12 rounded-xl border-slate-200 bg-white text-slate-900 font-black focus:border-blue-500 focus:ring-blue-500/10 transition-all" />
+                                                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-blue-500 transition-colors">
+                                                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                                                </button>
+                                                            </div>
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="confirmPassword"
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-3">
+                                                        <FormLabel className="text-slate-800 font-black text-sm">ยืนยันรหัสผ่าน <span className="text-red-500">*</span></FormLabel>
+                                                        <FormControl>
+                                                            <div className="relative group">
+                                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                                                    <ShieldCheck className="h-5 w-5 text-slate-400 group-focus-within:text-blue-500 transition-colors" />
                                                                 </div>
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                            <div className="flex justify-end p-1">
-                                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-xs font-black text-blue-600 hover:underline flex items-center gap-2">
-                                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                                    {showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่านสำหรับการสมัครนี้"}
-                                                </button>
-                                            </div>
-                                        </>
-                                    )}
+                                                                <Input type={showPassword ? "text" : "password"} {...field} className="h-12 pl-12 pr-4 rounded-xl border-slate-200 bg-white text-slate-900 font-black focus:border-blue-500 focus:ring-blue-500/10 transition-all" />
+                                                            </div>
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                        <div className="flex justify-end p-1">
+                                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="text-xs font-black text-blue-600 hover:underline flex items-center gap-2">
+                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                {showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่านสำหรับการสมัครนี้"}
+                                            </button>
+                                        </div>
+                                    </>
                                 </div>
 
                                 {/* Section 2: Personal Names */}
@@ -698,18 +727,18 @@ export function RegisterForm() {
                                 </div>
 
                                 {/* Section 3: Professional Details */}
-                                <div className="space-y-8">
+                                <div className="space-y-6">
                                     <div className="flex items-center gap-2 border-l-4 border-blue-600 pl-4 py-1">
                                         <School className="w-6 h-6 text-blue-600" />
                                         <h3 className="text-xl font-black text-slate-800">ข้อมูลหน่วยงานสายงาน</h3>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <FormField
                                             control={form.control}
                                             name="college"
                                             render={({ field }) => (
-                                                <FormItem className="space-y-3">
+                                                <FormItem className="space-y-2">
                                                     <FormLabel className="text-slate-800 font-black text-sm">ชื่อสถานศึกษา / หน่วยงานที่สังกัด <span className="text-red-500">*</span></FormLabel>
                                                     <FormControl>
                                                         <div className="relative group">
@@ -727,7 +756,7 @@ export function RegisterForm() {
                                                 control={form.control}
                                                 name="province"
                                                 render={({ field }) => (
-                                                    <FormItem className="space-y-3 flex flex-col pt-1">
+                                                    <FormItem className="space-y-2 flex flex-col pt-1">
                                                         <FormLabel className="text-slate-800 font-black text-sm">จังหวัด</FormLabel>
                                                         <Popover>
                                                             <PopoverTrigger asChild>
@@ -764,7 +793,7 @@ export function RegisterForm() {
                                                 control={form.control}
                                                 name="region"
                                                 render={({ field }) => (
-                                                    <FormItem className="space-y-3">
+                                                    <FormItem className="space-y-2">
                                                         <FormLabel className="text-slate-800 font-black text-sm">ภาค</FormLabel>
                                                         <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                                                             <FormControl>
@@ -787,85 +816,93 @@ export function RegisterForm() {
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <FormField
-                                            control={form.control}
-                                            name="teachingSubject"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-3">
-                                                    <FormLabel className="text-slate-800 font-black text-sm">วิชาที่สอน <span className="text-red-500">*</span></FormLabel>
-                                                    <FormControl>
-                                                        <Input
-                                                            placeholder="เช่น คอมพิวเตอร์ธุรกิจ, ภาษาอังกฤษ ฯลฯ"
-                                                            {...field}
-                                                            className="h-12 px-5 rounded-xl border-slate-200 bg-white focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold placeholder:text-slate-300 shadow-sm"
-                                                        />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
+                                    <div className="flex flex-col md:flex-row gap-4 items-start">
+                                        <div className="w-full md:w-64">
+                                            <FormField
+                                                control={form.control}
+                                                name="position"
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-2">
+                                                        <FormLabel className="text-slate-800 font-black text-sm">ตำแหน่ง <span className="text-red-500">*</span></FormLabel>
+                                                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                                            <FormControl>
+                                                                <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-sm">
+                                                                    <SelectValue placeholder="เลือกตำแหน่ง" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent className="rounded-xl shadow-xl border-none">
+                                                                <SelectItem value="ครูอัตราจ้าง" className="font-bold py-3 px-4">ครูอัตราจ้าง</SelectItem>
+                                                                <SelectItem value="พนักงานราชการ" className="font-bold py-3 px-4">พนักงานราชการ</SelectItem>
+                                                                <SelectItem value="ครูผู้ช่วย" className="font-bold py-3 px-4">ครูผู้ช่วย</SelectItem>
+                                                                <SelectItem value="ครู" className="font-bold py-3 px-4">ครู</SelectItem>
+                                                                <SelectItem value="รองผู้อำนวยการ" className="font-bold py-3 px-4">รองผอ.</SelectItem>
+                                                                <SelectItem value="ผู้อำนวยการ" className="font-bold py-3 px-4">ผอ.</SelectItem>
+                                                                <SelectItem value="ศึกษานิเทศก์" className="font-bold py-3 px-4">ศึกษานิเทศก์</SelectItem>
+                                                                <SelectItem value="อื่นๆ" className="font-bold py-3 px-4">อื่นๆ</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+
+                                        <div className="w-full md:w-64">
+                                            <FormField
+                                                control={form.control}
+                                                name="academicStanding"
+                                                render={({ field }) => (
+                                                    <FormItem className="space-y-2">
+                                                        <FormLabel className="text-slate-800 font-black text-sm">วิทยฐานะ</FormLabel>
+                                                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                                            <FormControl>
+                                                                <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-sm">
+                                                                    <SelectValue placeholder="เลือกวิทยฐานะ" />
+                                                                </SelectTrigger>
+                                                            </FormControl>
+                                                            <SelectContent className="rounded-xl shadow-xl border-none">
+                                                                <SelectItem value="ไม่มี" className="font-bold py-3 px-4">ไม่มี</SelectItem>
+                                                                <SelectItem value="ชำนาญการ" className="font-bold py-3 px-4">ชำนาญการ</SelectItem>
+                                                                <SelectItem value="ชำนาญการพิเศษ" className="font-bold py-3 px-4">ชำนาญการพิเศษ</SelectItem>
+                                                                <SelectItem value="เชี่ยวชาญ" className="font-bold py-3 px-4">เชี่ยวชาญ</SelectItem>
+                                                                <SelectItem value="เชี่ยวชาญพิเศษ" className="font-bold py-3 px-4">เชี่ยวชาญพิเศษ</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+
+                                        {!["รองผู้อำนวยการ", "ผู้อำนวยการ", "ศึกษานิเทศก์", "อื่นๆ"].includes(form.watch("position")) && (
+                                            <div className="w-full md:w-80">
+                                                <FormField
+                                                    control={form.control}
+                                                    name="teachingSubject"
+                                                    render={({ field }) => (
+                                                        <FormItem className="space-y-2">
+                                                            <FormLabel className="text-slate-800 font-black text-sm">สาขาวิชาที่สอน <span className="text-red-500">*</span></FormLabel>
+                                                            <FormControl>
+                                                                <Input
+                                                                    placeholder="เช่น คอมพิวเตอร์ธุรกิจ, ภาษาอังกฤษ ฯลฯ"
+                                                                    {...field}
+                                                                    className="h-12 px-5 rounded-xl border-slate-200 bg-white focus:ring-2 focus:ring-blue-100 transition-all text-slate-900 font-bold placeholder:text-slate-300 shadow-sm"
+                                                                />
+                                                            </FormControl>
+                                                            <FormMessage />
+                                                        </FormItem>
+                                                    )}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                                        <FormField
-                                            control={form.control}
-                                            name="position"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-3">
-                                                    <FormLabel className="text-slate-800 font-black text-sm">ตำแหน่ง <span className="text-red-500">*</span></FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-sm">
-                                                                <SelectValue placeholder="เลือกตำแหน่ง" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent className="rounded-xl shadow-xl border-none">
-                                                            <SelectItem value="ครูอัตราจ้าง" className="font-bold py-3 px-4">ครูอัตราจ้าง</SelectItem>
-                                                            <SelectItem value="พนักงานราชการ" className="font-bold py-3 px-4">พนักงานราชการ</SelectItem>
-                                                            <SelectItem value="ครูผู้ช่วย" className="font-bold py-3 px-4">ครูผู้ช่วย</SelectItem>
-                                                            <SelectItem value="ครู" className="font-bold py-3 px-4">ครู</SelectItem>
-                                                            <SelectItem value="รองผู้อำนวยการ" className="font-bold py-3 px-4">รองผอ.</SelectItem>
-                                                            <SelectItem value="ผู้อำนวยการ" className="font-bold py-3 px-4">ผอ.</SelectItem>
-                                                            <SelectItem value="ศึกษานิเทศก์" className="font-bold py-3 px-4">ศึกษานิเทศก์</SelectItem>
-                                                            <SelectItem value="อื่นๆ" className="font-bold py-3 px-4">อื่นๆ</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
-                                        <FormField
-                                            control={form.control}
-                                            name="academicStanding"
-                                            render={({ field }) => (
-                                                <FormItem className="space-y-3">
-                                                    <FormLabel className="text-slate-800 font-black text-sm">วิทยฐานะ</FormLabel>
-                                                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                                        <FormControl>
-                                                            <SelectTrigger className="h-12 px-4 rounded-xl border-slate-200 bg-white text-slate-900 font-bold shadow-sm">
-                                                                <SelectValue placeholder="เลือกวิทยฐานะ" />
-                                                            </SelectTrigger>
-                                                        </FormControl>
-                                                        <SelectContent className="rounded-xl shadow-xl border-none">
-                                                            <SelectItem value="ไม่มี" className="font-bold py-3 px-4">ไม่มี</SelectItem>
-                                                            <SelectItem value="ชำนาญการ" className="font-bold py-3 px-4">ชำนาญการ</SelectItem>
-                                                            <SelectItem value="ชำนาญการพิเศษ" className="font-bold py-3 px-4">ชำนาญการพิเศษ</SelectItem>
-                                                            <SelectItem value="เชี่ยวชาญ" className="font-bold py-3 px-4">เชี่ยวชาญ</SelectItem>
-                                                            <SelectItem value="เชี่ยวชาญพิเศษ" className="font-bold py-3 px-4">เชี่ยวชาญพิเศษ</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
-
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <FormField
                                             control={form.control}
                                             name="affiliation"
                                             render={({ field }) => (
-                                                <FormItem className="space-y-3">
+                                                <FormItem className="space-y-2">
                                                     <FormLabel className="text-slate-800 font-black text-sm">สังกัดหน่วยงาน</FormLabel>
                                                     <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                                                         <FormControl>
@@ -874,9 +911,17 @@ export function RegisterForm() {
                                                             </SelectTrigger>
                                                         </FormControl>
                                                         <SelectContent className="rounded-xl shadow-xl border-none">
-                                                            <SelectItem value="Government" className="font-bold py-3 px-4">รัฐบาล (อาชีวศึกษา)</SelectItem>
-                                                            <SelectItem value="Private" className="font-bold py-3 px-4">เอกชน</SelectItem>
-                                                            <SelectItem value="Supervisor_Unit" className="font-bold py-3 px-4">หน่วยศึกษานิเทศก์</SelectItem>
+                                                            <SelectItem value="สถานศึกษาภาครัฐ" className="font-bold py-3 px-4">สถานศึกษาภาครัฐ</SelectItem>
+                                                            <SelectItem value="สถานศึกษาภาคเอกชน" className="font-bold py-3 px-4">สถานศึกษาภาคเอกชน</SelectItem>
+                                                            <SelectItem value="สถานศึกษาที่ไม่ได้สังกัด สอศ." className="font-bold py-3 px-4">สถานศึกษาที่ไม่ได้สังกัด สอศ.</SelectItem>
+                                                            <SelectItem value="หน่วยศึกษานิเทศก์" className="font-bold py-3 px-4">หน่วยศึกษานิเทศก์</SelectItem>
+                                                            <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้</SelectItem>
+                                                            <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคเหนือ" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคเหนือ</SelectItem>
+                                                            <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคกลาง" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคกลาง</SelectItem>
+                                                            <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้ (จชต.)" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคใต้ (จชต.)</SelectItem>
+                                                            <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกเฉียงเหนือ" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกเฉียงเหนือ</SelectItem>
+                                                            <SelectItem value="ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกและกรุงเทพมหานคร" className="font-bold py-3 px-4">ศูนย์ส่งเสริมและพัฒนาอาชีวศึกษาภาคตะวันออกและกรุงเทพมหานคร</SelectItem>
+                                                            <SelectItem value="อื่น ๆ" className="font-bold py-3 px-4">อื่น ๆ</SelectItem>
                                                         </SelectContent>
                                                     </Select>
                                                     <FormMessage />

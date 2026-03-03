@@ -33,11 +33,11 @@ export function CertificateActions({ registrationId, isApproved, existingCertifi
         startTransition(async () => {
             try {
                 await issueCertificate(registrationId);
-                toast.success("ออกวุฒิบัตรสำเร็จ!");
+                toast.success("ออกเกียรติบัตรสำเร็จ!");
                 setOpen(false);
                 router.refresh();
             } catch (error) {
-                toast.error("ออกวุฒิบัตรไม่สำเร็จ: " + (error as Error).message);
+                toast.error("ออกเกียรติบัตรไม่สำเร็จ: " + (error as Error).message);
             }
         });
     };
@@ -50,9 +50,9 @@ export function CertificateActions({ registrationId, isApproved, existingCertifi
                     <AlertTriangle className="w-4 h-4 text-slate-400" />
                 </div>
                 <div>
-                    <p className="text-sm font-bold text-slate-600">ยังไม่สามารถออกวุฒิบัตรได้</p>
+                    <p className="text-sm font-bold text-slate-600">ยังไม่สามารถออกเกียรติบัตรได้</p>
                     <p className="text-[11px] text-slate-400 font-medium mt-0.5">
-                        ต้องอนุมัติผลงานก่อน จึงจะออกวุฒิบัตรได้
+                        ต้องอนุมัติผลงานก่อน จึงจะออกเกียรติบัตรได้
                     </p>
                 </div>
             </div>
@@ -67,7 +67,7 @@ export function CertificateActions({ registrationId, isApproved, existingCertifi
                     <CheckCircle className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                    <p className="text-sm font-bold text-emerald-800">ออกวุฒิบัตรแล้ว</p>
+                    <p className="text-sm font-bold text-emerald-800">ออกเกียรติบัตรแล้ว</p>
                     <p className="text-[11px] text-emerald-600 font-mono mt-0.5 truncate">
                         รหัส: {existingCertificateCode}
                     </p>
@@ -85,9 +85,9 @@ export function CertificateActions({ registrationId, isApproved, existingCertifi
                         <Award className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="flex-1">
-                        <p className="text-sm font-bold text-blue-800">ออกวุฒิบัตร</p>
+                        <p className="text-sm font-bold text-blue-800">ออกเกียรติบัตร</p>
                         <p className="text-[11px] text-blue-500 font-medium mt-0.5">
-                            คลิกเพื่อออกวุฒิบัตรให้ผู้เข้ารับการอบรม
+                            คลิกเพื่อออกเกียรติบัตรให้ผู้เข้ารับการอบรม
                         </p>
                     </div>
                     <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
@@ -105,10 +105,10 @@ export function CertificateActions({ registrationId, isApproved, existingCertifi
                             <Award className="w-8 h-8 text-yellow-300" />
                         </div>
                         <DialogTitle className="text-2xl font-black text-white mb-1">
-                            ออกวุฒิบัตร
+                            ออกเกียรติบัตร
                         </DialogTitle>
                         <DialogDescription className="text-blue-200 text-sm font-medium">
-                            ยืนยันการออกวุฒิบัตรสำหรับผู้เข้ารับการอบรม
+                            ยืนยันการออกเกียรติบัตรสำหรับผู้เข้ารับการอบรม
                         </DialogDescription>
                     </div>
                 </div>
@@ -118,15 +118,15 @@ export function CertificateActions({ registrationId, isApproved, existingCertifi
                     <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex gap-3">
                         <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
                         <p className="text-xs font-medium text-amber-700 leading-relaxed">
-                            เมื่อออกวุฒิบัตรแล้ว <strong>ไม่สามารถยกเลิก</strong>ได้ วุฒิบัตรจะปรากฏในหน้า
-                            "วุฒิบัตรของฉัน" ของผู้เข้ารับการอบรมทันที
+                            เมื่อออกเกียรติบัตรแล้ว <strong>ไม่สามารถยกเลิก</strong>ได้ เกียรติบัตรจะปรากฏในหน้า
+                            "เกียรติบัตรของฉัน" ของผู้เข้ารับการอบรมทันที
                         </p>
                     </div>
 
                     <div className="space-y-2 text-sm text-slate-600 bg-slate-50 rounded-2xl p-4">
                         <p className="flex items-center gap-2 font-medium">
                             <CheckCircle className="w-4 h-4 text-emerald-500" />
-                            ระบบจะสร้างรหัสวุฒิบัตรโดยอัตโนมัติ
+                            ระบบจะสร้างรหัสเกียรติบัตรโดยอัตโนมัติ
                         </p>
                         <p className="flex items-center gap-2 font-medium">
                             <CheckCircle className="w-4 h-4 text-emerald-500" />
@@ -148,9 +148,9 @@ export function CertificateActions({ registrationId, isApproved, existingCertifi
                         className="flex-1 h-12 rounded-xl bg-[#1a237e] hover:bg-[#151b60] font-bold shadow-lg shadow-indigo-100 transition-all"
                     >
                         {isPending ? (
-                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> กำลังออกวุฒิบัตร...</>
+                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> กำลังออกเกียรติบัตร...</>
                         ) : (
-                            <><Award className="mr-2 h-4 w-4" /> ยืนยันออกวุฒิบัตร</>
+                            <><Award className="mr-2 h-4 w-4" /> ยืนยันออกเกียรติบัตร</>
                         )}
                     </Button>
                 </DialogFooter>

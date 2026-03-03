@@ -3,13 +3,15 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LayoutList, LayoutGrid, Calendar, MapPin, Users, ChevronRight, Clock } from "lucide-react";
+import { LayoutList, LayoutGrid, Calendar, MapPin, Users, ChevronRight, Clock, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 import Link from "next/link";
 import { RegisterButton } from "@/components/activity/register-button";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
+import Image from "next/image";
+import { useMemo } from "react";
 
 const statusConfig: Record<string, { label: string; className: string; dotClass: string; cardBorder: string }> = {
     Open: {
@@ -41,15 +43,46 @@ interface ActivitiesViewProps {
 
 export function ActivitiesView({ activities, registeredActivityIds, canRegister, session }: ActivitiesViewProps) {
     const [view, setView] = useState<"list" | "grid">("list");
+    const [filter, setFilter] = useState<string>("all");
     const registeredSet = new Set(registeredActivityIds);
+
+    const filteredActivities = useMemo(() => {
+        const now = new Date();
+        return activities.filter((activity) => {
+            if (filter === "all") return true;
+            if (filter === "past") return new Date(activity.endTime) < now;
+            if (filter === "full") return activity.status === "Full";
+            if (filter === "open") return activity.status === "Open";
+            return true;
+        });
+    }, [activities, filter]);
 
     return (
         <div className="space-y-4">
-            {/* View Toggle */}
-            <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-slate-500">
-                    พบ <span className="text-blue-600">{activities.length}</span> กิจกรรม
-                </p>
+            {/* Filters and View Toggle */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <p className="text-sm font-bold text-slate-500 whitespace-nowrap">
+                        พบ <span className="text-blue-600">{filteredActivities.length}</span> กิจกรรม
+                    </p>
+
+                    <div className="relative group flex-1 sm:flex-none">
+                        <select
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value)}
+                            className="w-full sm:w-48 h-10 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer shadow-sm hover:border-slate-300"
+                        >
+                            <option value="all">ทั้งหมด</option>
+                            <option value="open">กิจกรรมที่ยังเปิดรับ</option>
+                            <option value="full">กิจกรรมที่เต็มแล้ว</option>
+                            <option value="past">กิจกรรมที่ผ่านไปแล้ว</option>
+                        </select>
+                        <Filter className="w-3.5 h-3.5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none group-focus-within:text-blue-500 transition-colors" />
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none border-l border-slate-100 pl-2">
+                            <ChevronRight className="w-3 h-3 text-slate-400 rotate-90" />
+                        </div>
+                    </div>
+                </div>
                 <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
                     <button
                         onClick={() => setView("list")}
@@ -89,9 +122,9 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
                     </div>
 
                     <div className="divide-y divide-slate-100">
-                        {activities.length === 0 && <EmptyState />}
+                        {filteredActivities.length === 0 && <EmptyState />}
 
-                        {activities.map((activity) => {
+                        {filteredActivities.map((activity) => {
                             const isRegistered = registeredSet.has(activity._id);
                             const isFull = activity.status === "Full";
                             const progress = Math.min(((activity.currentRegistrations || 0) / (activity.quota || 1)) * 100, 100);
@@ -180,13 +213,13 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
             {/* ---- GRID VIEW ---- */}
             {view === "grid" && (
                 <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                    {activities.length === 0 && (
+                    {filteredActivities.length === 0 && (
                         <div className="col-span-full">
                             <EmptyState />
                         </div>
                     )}
 
-                    {activities.map((activity) => {
+                    {filteredActivities.map((activity) => {
                         const isRegistered = registeredSet.has(activity._id);
                         const isFull = activity.status === "Full";
                         const progress = Math.min(((activity.currentRegistrations || 0) / (activity.quota || 1)) * 100, 100);
@@ -194,20 +227,51 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
 
                         return (
                             <Card key={activity._id} className={cn("group relative flex flex-col border border-slate-200 bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden border-t-4", st.cardBorder)}>
-                                <CardContent className="p-5 flex flex-col h-full space-y-3">
-                                    {/* Status + seats */}
-                                    <div className="flex justify-between items-start">
-                                        <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full border ${st.className}`}>
-                                            <span className={`w-1.5 h-1.5 rounded-full ${st.dotClass}`} /> {st.label}
+                                {/* Banner Image */}
+                                <div className="relative aspect-video w-full overflow-hidden bg-slate-100">
+                                    {activity.bannerImage ? (
+                                        <Image
+                                            src={activity.bannerImage}
+                                            alt={activity.title}
+                                            fill
+                                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                                            <Calendar className="w-8 h-8 opacity-20" />
+                                        </div>
+                                    )}
+
+                                    {/* Overlay Badges */}
+                                    <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+                                        <span className={`inline-flex items-center gap-1.5 text-[9px] font-bold px-2 py-1 rounded-full border shadow-sm backdrop-blur-md ${st.className}`}>
+                                            <span className={`w-1 h-1 rounded-full ${st.dotClass}`} /> {st.label}
                                         </span>
-                                        <div className="flex flex-col items-end gap-1">
-                                            <span className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
-                                                <Users className="w-3 h-3" /> {activity.currentRegistrations || 0}/{activity.quota}
+                                        {isRegistered && (
+                                            <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-1 rounded-full bg-blue-600/90 text-white shadow-sm backdrop-blur-md">
+                                                ✓ ลงทะเบียนแล้ว
                                             </span>
-                                            <div className="w-16 h-1 bg-slate-100 rounded-full overflow-hidden">
-                                                <div className={cn("h-full rounded-full", progress >= 100 ? "bg-red-500" : progress >= 70 ? "bg-orange-400" : "bg-blue-500")}
-                                                    style={{ width: `${progress}%` }} />
+                                        )}
+                                    </div>
+                                </div>
+
+                                <CardContent className="p-5 flex flex-col h-full space-y-3">
+                                    {/* Seats progress above title */}
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex -space-x-2">
+                                                {/* Mini avatar group placeholder or just seat info */}
+                                                <div className="w-5 h-5 rounded-full bg-slate-100 border border-white flex items-center justify-center text-[8px] font-bold text-slate-400">
+                                                    <Users className="w-2.5 h-2.5" />
+                                                </div>
                                             </div>
+                                            <span className="text-[10px] font-bold text-slate-400">
+                                                {activity.currentRegistrations || 0}/{activity.quota} ที่นั่ง
+                                            </span>
+                                        </div>
+                                        <div className="w-16 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                            <div className={cn("h-full rounded-full", progress >= 100 ? "bg-red-500" : progress >= 70 ? "bg-orange-400" : "bg-blue-500")}
+                                                style={{ width: `${progress}%` }} />
                                         </div>
                                     </div>
 

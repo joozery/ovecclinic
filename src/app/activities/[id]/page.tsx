@@ -28,6 +28,8 @@ import { ActivityActionButtons } from "@/components/activity/activity-action-but
 import { Navbar } from "@/components/home/navbar";
 import { Footer } from "@/components/home/footer";
 
+export const dynamic = "force-dynamic";
+
 export default async function ActivityDetailPage({
     params,
 }: {
@@ -124,18 +126,29 @@ export default async function ActivityDetailPage({
                             <div className="bg-white rounded-2xl p-8 md:p-10 border border-slate-100 shadow-sm space-y-6">
                                 <h2 className="text-xl font-black text-slate-900">สิ่งที่ต้องเตรียม</h2>
                                 <div className="grid gap-4">
-                                    {[
-                                        "เตรียมคอมพิวเตอร์หรือโทรศัพท์ที่เชื่อมต่ออินเทอร์เน็ตได้",
-                                        "ติดตั้งโปรแกรม Zoom",
-                                        "เตรียมกระดาษและปากกาสำหรับจดบันทึก"
-                                    ].map((item, i) => (
-                                        <div key={i} className="flex items-start gap-4">
-                                            <div className="mt-1">
-                                                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                                    {(activity.requirements && activity.requirements.length > 0) ? (
+                                        activity.requirements.map((item: string, i: number) => (
+                                            <div key={i} className="flex items-start gap-4">
+                                                <div className="mt-1">
+                                                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                                                </div>
+                                                <p className="text-slate-600 text-sm font-bold">{item}</p>
                                             </div>
-                                            <p className="text-slate-600 text-sm font-bold">{item}</p>
-                                        </div>
-                                    ))}
+                                        ))
+                                    ) : (
+                                        [
+                                            "เตรียมคอมพิวเตอร์หรือโทรศัพท์ที่เชื่อมต่ออินเทอร์เน็ตได้",
+                                            "ติดตั้งโปรแกรม Zoom",
+                                            "เตรียมกระดาษและปากกาสำหรับจดบันทึก"
+                                        ].map((item, i) => (
+                                            <div key={i} className="flex items-start gap-4">
+                                                <div className="mt-1">
+                                                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                                                </div>
+                                                <p className="text-slate-600 text-sm font-bold">{item}</p>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
 
@@ -147,45 +160,62 @@ export default async function ActivityDetailPage({
                                         <h2 className="text-xl font-black text-slate-900">เอกสารประกอบและสื่อการสอน</h2>
                                     </div>
 
-                                    {activity.externalSourceLink && (
-                                        <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-3xl space-y-3">
-                                            <div className="flex items-center gap-3 text-blue-700">
-                                                <Share2 className="w-5 h-5" />
-                                                <span className="font-black text-sm">ลิงก์เอกสารประกอบเพิ่มเติม (Google Drive / OneDrive)</span>
+                                    {new Date() < new Date(activity.startTime) ? (
+                                        <div className="p-8 border-2 border-dashed border-slate-100 rounded-[2rem] bg-slate-50/50 flex flex-col items-center justify-center text-center space-y-4">
+                                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm text-slate-300">
+                                                <Clock className="w-8 h-8" />
                                             </div>
-                                            <p className="text-xs text-slate-500 font-medium">แอดมินหรือศึกษานิเทศก์ได้แนบลิงก์ภายนอกสำหรับรวบรวมเอกสารชุดใหญ่ไว้ให้ดาวน์โหลดเพิ่มเติม</p>
-                                            <Button className="w-full bg-white hover:bg-slate-50 text-blue-600 border border-blue-200 rounded-2xl font-black gap-2 h-12 shadow-sm" asChild>
-                                                <a href={activity.externalSourceLink} target="_blank" rel="noopener noreferrer">
-                                                    <Download className="w-4 h-4" />
-                                                    ไปยังลิงก์เอกสาร
-                                                </a>
-                                            </Button>
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-black text-slate-900">ยังไม่ถึงเวลาเผยแพร่เอกสาร</p>
+                                                <p className="text-[11px] font-bold text-slate-400 max-w-[280px]">เอกสารจะปรากฏให้ดาวน์โหลดเมื่อถึงวันและเวลาที่เริ่มการนิเทศ เพื่อให้การนิเทศเป็นไปอย่างมีประสิทธิภาพ</p>
+                                            </div>
+                                            <div className="px-4 py-2 bg-blue-50 text-blue-600 text-[10px] font-black rounded-full border border-blue-100 italic">
+                                                ปลดล็อกเมื่อ: {format(new Date(activity.startTime), "d MMM yyyy HH:mm", { locale: th })} น.
+                                            </div>
                                         </div>
-                                    )}
-
-                                    <div className="space-y-3">
-                                        {activity.documents.map((doc: any, i: number) => (
-                                            <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 group hover:bg-slate-100 transition-colors">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-black text-[10px] text-slate-400 shadow-sm uppercase">
-                                                        {doc.type?.split('/')[1] || doc.name.split('.').pop() || 'FILE'}
+                                    ) : (
+                                        <>
+                                            {activity.externalSourceLink && (
+                                                <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-3xl space-y-3">
+                                                    <div className="flex items-center gap-3 text-blue-700">
+                                                        <Share2 className="w-5 h-5" />
+                                                        <span className="font-black text-sm">ลิงก์เอกสารประกอบเพิ่มเติม (Google Drive / OneDrive)</span>
                                                     </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-slate-900">{doc.name}</p>
-                                                        <p className="text-[10px] font-bold text-slate-400">
-                                                            {doc.size ? `${(doc.size / (1024 * 1024)).toFixed(2)} MB` : 'ไม่ทราบขนาด'}
-                                                        </p>
-                                                    </div>
+                                                    <p className="text-xs text-slate-500 font-medium">แอดมินหรือศึกษานิเทศก์ได้แนบลิงก์ภายนอกสำหรับรวบรวมเอกสารชุดใหญ่ไว้ให้ดาวน์โหลดเพิ่มเติม</p>
+                                                    <Button className="w-full bg-white hover:bg-slate-50 text-blue-600 border border-blue-200 rounded-2xl font-black gap-2 h-12 shadow-sm" asChild>
+                                                        <a href={activity.externalSourceLink} target="_blank" rel="noopener noreferrer">
+                                                            <Download className="w-4 h-4" />
+                                                            ไปยังลิงก์เอกสาร
+                                                        </a>
+                                                    </Button>
                                                 </div>
-                                                <Button variant="ghost" size="sm" className="gap-2 text-slate-500 font-bold hover:text-blue-600" asChild>
-                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                                                        <Download className="w-4 h-4" />
-                                                        ดาวน์โหลด
-                                                    </a>
-                                                </Button>
+                                            )}
+
+                                            <div className="space-y-3">
+                                                {activity.documents.map((doc: any, i: number) => (
+                                                    <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 group hover:bg-slate-100 transition-colors">
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-black text-[10px] text-slate-400 shadow-sm uppercase">
+                                                                {doc.type?.split('/')[1] || doc.name.split('.').pop() || 'FILE'}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-bold text-slate-900">{doc.name}</p>
+                                                                <p className="text-[10px] font-bold text-slate-400">
+                                                                    {doc.size ? `${(doc.size / (1024 * 1024)).toFixed(2)} MB` : 'ไม่ทราบขนาด'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <Button variant="ghost" size="sm" className="gap-2 text-slate-500 font-bold hover:text-blue-600" asChild>
+                                                            <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                                                                <Download className="w-4 h-4" />
+                                                                ดาวน์โหลด
+                                                            </a>
+                                                        </Button>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
+                                        </>
+                                    )}
                                 </div>
                             )}
 
@@ -196,26 +226,37 @@ export default async function ActivityDetailPage({
                                         <Video className="w-6 h-6 text-blue-600" />
                                         <h2 className="text-xl font-black text-[#1a237e]">ข้อมูลการเข้าประชุม</h2>
                                     </div>
-                                    <div className="bg-white rounded-2xl p-6 space-y-4">
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="font-bold text-slate-500">Meeting ID:</span>
-                                            <span className="font-black text-slate-900 tabular-nums">
-                                                {activity.meetingId || "ไม่ระบุ"}
-                                            </span>
+
+                                    {new Date() < new Date(activity.startTime) ? (
+                                        <div className="bg-white rounded-2xl p-6 flex flex-col items-center justify-center text-center space-y-3 border border-blue-100">
+                                            <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-300">
+                                                <Video className="w-6 h-6" />
+                                            </div>
+                                            <p className="text-xs font-black text-[#1a237e]">ระบบจะเปิดให้เข้าประชุมเมื่อถึงเวลาเริ่มต้น</p>
+                                            <p className="text-[10px] font-bold text-slate-400">กรุณากลับเข้ามาอีกครั้งในเวลา {format(new Date(activity.startTime), "HH:mm", { locale: th })} น.</p>
                                         </div>
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="font-bold text-slate-500">Password:</span>
-                                            <span className="font-black text-slate-900">
-                                                {activity.meetingPassword || "ไม่ระบุ"}
-                                            </span>
+                                    ) : (
+                                        <div className="bg-white rounded-2xl p-6 space-y-4">
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="font-bold text-slate-500">Meeting ID:</span>
+                                                <span className="font-black text-slate-900 tabular-nums">
+                                                    {activity.meetingId || "ไม่ระบุ"}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <span className="font-bold text-slate-500">Password:</span>
+                                                <span className="font-black text-slate-900">
+                                                    {activity.meetingPassword || "ไม่ระบุ"}
+                                                </span>
+                                            </div>
+                                            <Button className="w-full bg-[#26b8c4] hover:bg-[#1fa1ab] h-12 rounded-xl font-black gap-2 transition-all active:scale-95 shadow-lg shadow-cyan-100" asChild>
+                                                <a href={activity.location.startsWith('http') ? activity.location : '#'} target="_blank" rel="noopener noreferrer">
+                                                    <Video className="w-5 h-5" />
+                                                    เข้าร่วมประชุม (กดลิงก์)
+                                                </a>
+                                            </Button>
                                         </div>
-                                        <Button className="w-full bg-[#26b8c4] hover:bg-[#1fa1ab] h-12 rounded-xl font-black gap-2 transition-all active:scale-95 shadow-lg shadow-cyan-100" asChild>
-                                            <a href={activity.location.startsWith('http') ? activity.location : '#'} target="_blank" rel="noopener noreferrer">
-                                                <Video className="w-5 h-5" />
-                                                เข้าร่วมประชุม (กดลิงก์)
-                                            </a>
-                                        </Button>
-                                    </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -277,8 +318,13 @@ export default async function ActivityDetailPage({
                                             </p>
                                             <p className="text-[10px] font-bold text-slate-400">
                                                 {activity.createdBy?.profile?.position || "ศึกษานิเทศก์"}
-                                                {activity.createdBy?.profile?.academicStanding ? `/${activity.createdBy.profile.academicStanding}` : ""}
+                                                {activity.createdBy?.profile?.academicStanding ? `${activity.createdBy.profile.academicStanding}` : ""}
                                             </p>
+                                            {activity.createdBy?.profile?.college && (
+                                                <p className="text-[10px] font-bold text-slate-400 mt-0.5">
+                                                    {activity.createdBy.profile.college}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="space-y-2">

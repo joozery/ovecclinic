@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, Shield, Loader2, Trash2, AlertTriangle } from "lucide-react";
+import { MoreHorizontal, Shield, Loader2, Trash2, AlertTriangle, UserPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -28,12 +28,16 @@ import {
 import { updateUserRole, deleteUser } from "@/actions/user";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { UserEditForm } from "./user-edit-form";
 
 interface UserActionsProps {
     user: {
         _id: string;
         name: string;
         role: string;
+        email?: string;
+        image?: string;
+        profile?: any;
     };
     currentUserRole: string;
 }
@@ -42,6 +46,7 @@ export function UserActions({ user, currentUserRole }: UserActionsProps) {
     const router = useRouter();
     const [isPending, setIsPending] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+    const [showEditDialog, setShowEditDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const canEdit = currentUserRole === 'super_admin' || (currentUserRole === 'admin' && user.role !== 'super_admin' && user.role !== 'admin');
@@ -125,6 +130,17 @@ export function UserActions({ user, currentUserRole }: UserActionsProps) {
 
                     <DropdownMenuSeparator className="bg-slate-100 my-1" />
 
+                    {/* Edit Profile */}
+                    <DropdownMenuItem
+                        className="rounded-lg text-sm font-bold text-slate-700 cursor-pointer"
+                        onSelect={() => setShowEditDialog(true)}
+                    >
+                        <UserPen className="mr-2 h-4 w-4 text-emerald-500" />
+                        แก้ไขข้อมูลส่วนตัว
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator className="bg-slate-100 my-1" />
+
                     {/* Delete */}
                     <DropdownMenuItem
                         className="rounded-lg text-sm font-bold text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
@@ -135,6 +151,29 @@ export function UserActions({ user, currentUserRole }: UserActionsProps) {
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
+
+            {/* Edit Profile Dialog */}
+            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+                <DialogContent className="sm:max-w-2xl rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
+                    <DialogHeader className="p-8 pb-4 bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+                                <UserPen className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-xl font-black text-white">แก้ไขข้อมูลส่วนตัว</DialogTitle>
+                                <DialogDescription className="text-blue-100/70 text-sm font-medium">
+                                    ปรับปรุงรายละเอียดข้อมูลโปรไฟล์ของ <span className="text-white font-bold">{user.name}</span>
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="p-8 max-h-[70vh] overflow-y-auto">
+                        <UserEditForm user={user} onSuccess={() => setShowEditDialog(false)} />
+                    </div>
+                </DialogContent>
+            </Dialog>
 
             {/* Delete Confirm Dialog */}
             <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

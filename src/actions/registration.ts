@@ -57,10 +57,14 @@ export async function registerForActivity(activityId: string) {
     );
 
     // Send Notification Email
-    try {
-        if (session.user.email) {
-            await sendNotificationEmail({
-                to: session.user.email,
+    const userEmail = session.user.email;
+    const isFakeEmail = userEmail?.endsWith("@thaid.go.th");
+
+    if (userEmail && !isFakeEmail) {
+        try {
+            console.log(`[ACTION] Register: Attempting email to ${userEmail}`);
+            const emailResult = await sendNotificationEmail({
+                to: userEmail,
                 teacherName: session.user.name || "คุณครู",
                 activityTitle: activity.title,
                 date: format(new Date(activity.startTime), "d MMMM yyyy", { locale: th }),
@@ -70,10 +74,19 @@ export async function registerForActivity(activityId: string) {
                 supervisorName: activity.createdBy?.name || "ศึกษานิเทศก์",
                 organizationName: "สำนักงานคณะกรรมการการอาชีวศึกษา (OVEC)"
             });
+
+            if (emailResult.success) {
+                console.log(`[ACTION] Register: Email sent successfully to ${userEmail}`);
+            } else {
+                console.error(`[ACTION] Register: Email failed for ${userEmail}:`, emailResult.error);
+            }
+        } catch (emailError: any) {
+            console.error("[ACTION] Register: Fatal email error:", emailError.message);
         }
-    } catch (emailError) {
-        console.error("Failed to send notification email:", emailError);
-        // We don't throw error here to avoid rolling back registration just because email failed
+    } else if (isFakeEmail) {
+        console.warn(`[ACTION] Register: Skipping email for placeholder address: ${userEmail}`);
+    } else {
+        console.warn("[ACTION] Register: No email found for user in session");
     }
 
     // Check if now full, update activity status if needed

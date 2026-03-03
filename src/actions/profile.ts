@@ -33,8 +33,19 @@ export async function updateProfile(formData: FormData) {
     const academicStanding = formData.get("academicStanding") as string;
     const province = formData.get("province") as string;
     const image = formData.get("image") as string;
+    const email = formData.get("email") as string;
 
     await dbConnect();
+
+    // Check if Email exists in another user
+    if (email) {
+        const existingUserWithEmail = await User.findOne({ email });
+        if (existingUserWithEmail && existingUserWithEmail._id.toString() !== session.user.id) {
+            return {
+                error: `อีเมลนี้ถูกใช้งานแล้ว กรุณาใช้อีเมลอื่น`
+            };
+        }
+    }
 
     // Combine Birth Date
     let birthDate: Date | null = null;
@@ -43,7 +54,7 @@ export async function updateProfile(formData: FormData) {
     }
 
     const updateData: any = {
-        name: name || `${firstNameTH} ${lastNameTH}`.trim(),
+        name: `${prefixTH}${firstNameTH} ${lastNameTH}`.trim(),
         idCard,
         profile: {
             prefixTH, firstNameTH, lastNameTH,
@@ -63,6 +74,9 @@ export async function updateProfile(formData: FormData) {
 
     if (image) {
         updateData.image = image;
+    }
+    if (email) {
+        updateData.email = email;
     }
 
     await User.findByIdAndUpdate(session.user.id, updateData);

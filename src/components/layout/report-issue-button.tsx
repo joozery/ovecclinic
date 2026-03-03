@@ -18,7 +18,7 @@ const categories = [
     { value: "bug", label: "🐛 พบข้อผิดพลาด / บัก" },
     { value: "account", label: "👤 ปัญหาเกี่ยวกับบัญชี" },
     { value: "activity", label: "📅 ปัญหาเกี่ยวกับกิจกรรม" },
-    { value: "certificate", label: "🎓 ปัญหาเกี่ยวกับวุฒิบัตร" },
+    { value: "certificate", label: "🎓 ปัญหาเกี่ยวกับเกียรติบัตร" },
     { value: "other", label: "💬 อื่นๆ / สอบถามทั่วไป" },
 ];
 
@@ -104,8 +104,8 @@ export function ReportIssueButton({ isCollapsed }: ReportIssueButtonProps) {
                                             type="button"
                                             onClick={() => setForm({ ...form, category: c.value })}
                                             className={`flex items-center justify-between px-4 py-2.5 rounded-xl border text-sm font-bold text-left transition-all ${form.category === c.value
-                                                    ? "bg-orange-50 border-orange-300 text-orange-700"
-                                                    : "bg-white border-slate-100 text-slate-600 hover:border-orange-200 hover:bg-orange-50/50"
+                                                ? "bg-orange-50 border-orange-300 text-orange-700"
+                                                : "bg-white border-slate-100 text-slate-600 hover:border-orange-200 hover:bg-orange-50/50"
                                                 }`}
                                         >
                                             <span>{c.label}</span>

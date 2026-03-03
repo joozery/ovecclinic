@@ -23,6 +23,8 @@ export async function createActivity(formData: FormData) {
     const meetingPassword = formData.get("meetingPassword");
     const bannerImage = formData.get("bannerImage");
     const externalSourceLink = formData.get("externalSourceLink");
+    const requirementsRaw = formData.get("requirements");
+    const requirements = requirementsRaw ? JSON.parse(requirementsRaw as string) : [];
     const documentsRaw = formData.get("documents");
     const documents = documentsRaw ? JSON.parse(documentsRaw as string) : [];
 
@@ -32,24 +34,33 @@ export async function createActivity(formData: FormData) {
 
     await dbConnect();
 
-    await Activity.create({
-        title,
-        description,
-        startTime: new Date(startTime as string),
-        endTime: new Date(endTime as string),
-        quota,
-        location,
-        targetBranch: targetBranch || undefined,
-        meetingId,
-        meetingPassword,
-        bannerImage,
-        externalSourceLink,
-        documents,
-        createdBy: session.user.id,
-    });
+    try {
+        await Activity.create({
+            title,
+            description,
+            startTime: new Date(startTime as string),
+            endTime: new Date(endTime as string),
+            quota,
+            location,
+            targetBranch: targetBranch || undefined,
+            meetingId,
+            meetingPassword,
+            bannerImage,
+            externalSourceLink,
+            documents,
+            requirements,
+            createdBy: session.user.id,
+        });
 
-    revalidatePath("/dashboard/activities");
-    return { success: true };
+        revalidatePath("/dashboard/activities");
+        revalidatePath("/activities");
+        revalidatePath("/");
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Create activity error:", error);
+        return { success: false, error: error.message || "Failed to create activity" };
+    }
 }
 
 // ... imports
@@ -131,30 +142,56 @@ export async function updateActivity(id: string, formData: FormData) {
     const meetingPassword = formData.get("meetingPassword");
     const bannerImage = formData.get("bannerImage");
     const externalSourceLink = formData.get("externalSourceLink");
+    const requirementsRaw = formData.get("requirements");
+    const requirements = requirementsRaw ? JSON.parse(requirementsRaw as string) : [];
     const documentsRaw = formData.get("documents");
     const documents = documentsRaw ? JSON.parse(documentsRaw as string) : [];
 
-    if (!title || !description || !startTime || !endTime || !quota || !location) {
-        throw new Error("All fields are required");
+    console.log("DEBUG - Backend received requirements:", requirements);
+    console.log("DEBUG - Raw requirements value:", requirementsRaw);
+
+    if (!title || !description || !startTime || !endTime || !location) {
+        return { success: false, error: "กรอกข้อมูลที่จำเป็นให้ครบถ้วน" };
+    }
+
+    const quotaNum = Number(formData.get("quota"));
+    if (isNaN(quotaNum) || quotaNum < 1) {
+        return { success: false, error: "จำนวนที่นั่งต้องเป็นตัวเลขที่มากกว่า 0" };
     }
 
     await dbConnect();
 
-    await Activity.findByIdAndUpdate(id, {
-        title,
-        description,
-        startTime: new Date(startTime as string),
-        endTime: new Date(endTime as string),
-        quota,
-        location,
-        targetBranch: targetBranch || undefined,
-        meetingId,
-        meetingPassword,
-        bannerImage,
-        externalSourceLink,
-        documents,
-    });
+    try {
+        const updateData = {
+            title,
+            description,
+            startTime: new Date(startTime as string),
+            endTime: new Date(endTime as string),
+            quota: quotaNum,
+            location,
+            targetBranch: targetBranch || undefined,
+            meetingId,
+            meetingPassword,
+            bannerImage,
+            externalSourceLink,
+            documents,
+            requirements: Array.isArray(requirements) ? requirements : [],
+        };
 
-    revalidatePath("/dashboard/activities");
-    return { success: true };
+        console.log("DEBUG - Final Object to Update:", JSON.stringify(updateData, null, 2));
+
+        const updatedActivity = await Activity.findByIdAndUpdate(id, updateData, { new: true });
+
+        console.log("DEBUG - Activity after update:", JSON.stringify(updatedActivity?.requirements, null, 2));
+
+        revalidatePath(`/activities/${id}`);
+        revalidatePath("/activities");
+        revalidatePath("/dashboard/activities");
+        revalidatePath("/");
+
+        return { success: true };
+    } catch (error: any) {
+        console.error("Update activity error:", error);
+        return { success: false, error: error.message || "Failed to update activity" };
+    }
 }

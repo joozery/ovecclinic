@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { format } from "date-fns";
+import { th } from "date-fns/locale";
 import { FileText, User as UserIcon, LinkIcon, CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -87,7 +88,7 @@ export default async function SupervisionDashboard() {
                                             </div>
                                         </TableCell>
                                         <TableCell className="py-4 text-sm text-slate-600 font-medium">
-                                            {format(new Date(submission.submittedAt), "dd MMM, HH:mm น.")}
+                                            {format(new Date(submission.submittedAt), "dd MMM yyyy, HH:mm น.", { locale: th })}
                                         </TableCell>
                                         <TableCell className="py-4">
                                             <Badge

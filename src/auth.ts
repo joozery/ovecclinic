@@ -53,14 +53,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     console.log("DB Connected.");
 
                     const profileData = profile as any;
-                    const firstName = profileData.firstNameTH || profileData?.given_name || profileData?.th_fname || "";
-                    const lastName = profileData.lastNameTH || profileData?.family_name || profileData?.th_lname || "";
-                    const firstNameEN = profileData.firstNameEN || profileData?.given_name_en || profileData?.en_fname || "";
-                    const lastNameEN = profileData.lastNameEN || profileData?.family_name_en || profileData?.en_lname || "";
-                    const prefixTH = profileData.prefixTH || profileData?.title || profileData?.th_title || "";
-                    const prefixEN = profileData.prefixEN || profileData?.title_en || profileData?.en_title || "";
-                    const birthdate = profileData?.birthdate || ""; // Standardize name to match RegisterForm
-                    const idCardFromProfile = profileData?.idCard || profileData?.pid || account.providerAccountId;
+                    const firstName = profileData.given_name || "";
+                    const lastName = profileData.family_name || "";
+                    const firstNameEN = profileData.given_name_en || "";
+                    const lastNameEN = profileData.family_name_en || "";
+                    const prefixTH = profileData.title || "";
+                    const prefixEN = profileData.title_en || "";
+                    const gender = profileData?.gender || "";
+                    const birthdate = profileData?.birthdate || "";
+                    const idCardFromProfile = profileData?.pid || profileData?.sub || account.providerAccountId;
 
                     // 1. Try to find user by provider ID first
                     console.log("Searching for user by provider ID:", account.providerAccountId);
@@ -82,11 +83,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                     }
 
                     if (!existingUser) {
-                        console.log("Creating new user...");
+                        console.log("Creating new user with prefix:", prefixTH, "and name:", firstName);
                         const userEmail = user.email || `${account.providerAccountId}@thaid.go.th`;
 
+                        const formattedName = `${prefixTH}${firstName} ${lastName}`.trim();
                         const newUser = await User.create({
-                            name: user.name || `${firstName} ${lastName}`.trim() || "User",
+                            name: formattedName || "User",
                             email: userEmail,
                             idCard: idCardFromProfile,
                             image: user.image,
@@ -104,6 +106,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                                 prefixEN: prefixEN,
                                 birthDate: birthdate ? new Date(birthdate) : null,
                                 registrantType: "Thai",
+                                gender: gender === "1" ? "ชาย" : gender === "2" ? "หญิง" : gender,
                             },
                             isProfileComplete: false,
                         });
@@ -121,24 +124,44 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         (user as any).prefixTH = prefixTH;
                         (user as any).prefixEN = prefixEN;
                         (user as any).birthdate = birthdate;
+                        (user as any).gender = gender === "male" || gender === "1" ? "ชาย" : gender === "female" || gender === "2" ? "หญิง" : gender;
                     } else {
                         console.log("Existing user found:", existingUser._id);
+                        const formattedName = `${prefixTH}${firstName} ${lastName}`.trim();
+                        user.name = formattedName || existingUser.name;
                         user.role = existingUser.role;
                         user.isProfileComplete = existingUser.isProfileComplete;
                         user.id = existingUser._id.toString();
                         user.email = existingUser.email;
                         (user as any).position = existingUser.profile?.position;
-                        (user as any).idCard = existingUser.idCard;
-                        (user as any).firstNameTH = existingUser.profile?.firstNameTH;
-                        (user as any).lastNameTH = existingUser.profile?.lastNameTH;
-                        (user as any).firstNameEN = existingUser.profile?.firstNameEN;
-                        (user as any).lastNameEN = existingUser.profile?.lastNameEN;
-                        (user as any).prefixTH = existingUser.profile?.prefixTH;
-                        (user as any).prefixEN = existingUser.profile?.prefixEN;
-                        (user as any).birthdate = existingUser.profile?.birthDate ? existingUser.profile.birthDate.toISOString().split('T')[0] : null;
+                        (user as any).idCard = existingUser.idCard || idCardFromProfile;
+                        (user as any).firstNameTH = firstName || existingUser.profile?.firstNameTH;
+                        (user as any).lastNameTH = lastName || existingUser.profile?.lastNameTH;
+                        (user as any).firstNameEN = firstNameEN || existingUser.profile?.firstNameEN;
+                        (user as any).lastNameEN = lastNameEN || existingUser.profile?.lastNameEN;
+                        (user as any).prefixTH = prefixTH || existingUser.profile?.prefixTH;
+                        (user as any).prefixEN = prefixEN || existingUser.profile?.prefixEN;
+                        (user as any).birthdate = (birthdate || (existingUser.profile?.birthDate ? existingUser.profile.birthDate.toISOString().split('T')[0] : null));
+                        (user as any).gender = (gender === "male" || gender === "1" ? "ชาย" : gender === "female" || gender === "2" ? "หญิง" : gender) || existingUser.profile?.gender;
 
                         if (existingUser.image) {
                             user.image = existingUser.image;
+                        }
+
+                        // Update existing user with fresh ThaiID data if missing or if name format needs update
+                        let needsUpdate = false;
+                        if (existingUser.name !== formattedName) { existingUser.name = formattedName; needsUpdate = true; }
+                        if (!existingUser.profile?.firstNameTH && firstName) { existingUser.profile.firstNameTH = firstName; needsUpdate = true; }
+                        if (!existingUser.profile?.lastNameTH && lastName) { existingUser.profile.lastNameTH = lastName; needsUpdate = true; }
+                        if (!existingUser.profile?.prefixTH && prefixTH) { existingUser.profile.prefixTH = prefixTH; needsUpdate = true; }
+                        if (!existingUser.profile?.prefixEN && prefixEN) { existingUser.profile.prefixEN = prefixEN; needsUpdate = true; }
+                        if (!existingUser.profile?.firstNameEN && firstNameEN) { existingUser.profile.firstNameEN = firstNameEN; needsUpdate = true; }
+                        if (!existingUser.profile?.lastNameEN && lastNameEN) { existingUser.profile.lastNameEN = lastNameEN; needsUpdate = true; }
+                        if (!existingUser.profile?.birthDate && birthdate) { existingUser.profile.birthDate = new Date(birthdate); needsUpdate = true; }
+                        if (!existingUser.idCard && idCardFromProfile) { existingUser.idCard = idCardFromProfile; needsUpdate = true; }
+
+                        if (needsUpdate) {
+                            await existingUser.save();
                         }
 
                         // Link provider account if not already linked
@@ -195,6 +218,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 (token as any).prefixTH = (user as any).prefixTH;
                 (token as any).prefixEN = (user as any).prefixEN;
                 (token as any).birthdate = (user as any).birthdate;
+                (token as any).gender = (user as any).gender;
                 (token as any).position = (user as any).position;
                 if (user.image) token.picture = user.image;
                 if (user.image) (token as any).image = user.image;

@@ -48,6 +48,7 @@ export default async function SettingsPage() {
             <SettingsTabs
                 user={JSON.parse(JSON.stringify({
                     name: user.name,
+                    email: user.email || "",
                     idCard: user.idCard || "",
                     image: user.image || null,
                     ...user.profile,
