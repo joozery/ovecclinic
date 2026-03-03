@@ -148,7 +148,7 @@ export function LoginForm() {
                                     <span className="text-slate-400">ไม่มีบัญชี? </span>
                                     <Link href="/register" className="text-[#1a237e] font-bold hover:underline underline-offset-4">สมัครสมาชิก</Link>
                                 </div>
-                                <button type="button" className="text-[#1a237e] font-bold hover:underline underline-offset-4">ลืมรหัสผ่าน</button>
+                                <Link href="/forgot-password" className="text-[#1a237e] font-bold hover:underline underline-offset-4">ลืมรหัสผ่าน</Link>
                             </div>
 
                             <Button

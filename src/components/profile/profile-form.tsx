@@ -267,9 +267,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                 render={({ field }) => (
                                     <FormItem className="md:col-span-1">
                                         <FormLabel className="text-xs font-black text-slate-500">คำนำหน้า</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
                                             <FormControl>
-                                                <SelectTrigger className="h-11 rounded-xl border-slate-200">
+                                                <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50">
                                                     <SelectValue placeholder="-" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -292,7 +292,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                     <FormItem className="md:col-span-2">
                                         <FormLabel className="text-xs font-black text-slate-500">ชื่อจริง (ไทย)</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="ชื่อจริงภาษาไทย" className="h-11 rounded-xl border-slate-200" {...field} />
+                                            <Input disabled placeholder="ชื่อจริงภาษาไทย" className="h-11 rounded-xl border-slate-200 bg-slate-50" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -305,7 +305,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                     <FormItem className="md:col-span-3">
                                         <FormLabel className="text-xs font-black text-slate-500">นามสกุล (ไทย)</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="นามสกุลภาษาไทย" className="h-11 rounded-xl border-slate-200" {...field} />
+                                            <Input disabled placeholder="นามสกุลภาษาไทย" className="h-11 rounded-xl border-slate-200 bg-slate-50" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -326,9 +326,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                 render={({ field }) => (
                                     <FormItem className="md:col-span-1">
                                         <FormLabel className="text-xs font-black text-slate-500">Prefix</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
                                             <FormControl>
-                                                <SelectTrigger className="h-11 rounded-xl border-slate-200">
+                                                <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50">
                                                     <SelectValue placeholder="-" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -350,7 +350,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                     <FormItem className="md:col-span-2">
                                         <FormLabel className="text-xs font-black text-slate-500">First Name</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Full Name (EN)" className="h-11 rounded-xl border-slate-200" {...field} />
+                                            <Input disabled placeholder="Full Name (EN)" className="h-11 rounded-xl border-slate-200 bg-slate-50" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -363,7 +363,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                     <FormItem className="md:col-span-3">
                                         <FormLabel className="text-xs font-black text-slate-500">Last Name</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Surname (EN)" className="h-11 rounded-xl border-slate-200" {...field} />
+                                            <Input disabled placeholder="Surname (EN)" className="h-11 rounded-xl border-slate-200 bg-slate-50" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -381,9 +381,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                     control={form.control}
                                     name="birthDay"
                                     render={({ field }) => (
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
                                             <FormControl>
-                                                <SelectTrigger className="h-11 rounded-xl border-slate-200">
+                                                <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50">
                                                     <SelectValue placeholder="วัน" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -401,9 +401,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                     control={form.control}
                                     name="birthMonth"
                                     render={({ field }) => (
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
                                             <FormControl>
-                                                <SelectTrigger className="h-11 rounded-xl border-slate-200">
+                                                <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50">
                                                     <SelectValue placeholder="เดือน" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -421,9 +421,9 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                     control={form.control}
                                     name="birthYear"
                                     render={({ field }) => (
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled>
                                             <FormControl>
-                                                <SelectTrigger className="h-11 rounded-xl border-slate-200">
+                                                <SelectTrigger className="h-11 rounded-xl border-slate-200 bg-slate-50">
                                                     <SelectValue placeholder="ปี" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -481,7 +481,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
                                 <FormItem>
                                     <FormLabel className="text-xs font-black text-slate-500">อีเมล</FormLabel>
                                     <FormControl>
-                                        <Input type="email" placeholder="example@email.com" className="h-11 rounded-xl border-slate-200" {...field} />
+                                        <Input disabled type="email" placeholder="example@email.com" className="h-11 rounded-xl border-slate-200 bg-slate-50" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

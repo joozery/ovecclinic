@@ -6,9 +6,12 @@ import Image from "next/image";
 
 interface NavbarProps {
     isLoggedIn: boolean;
+    manualUrl?: string | null;
 }
 
-export function Navbar({ isLoggedIn }: NavbarProps) {
+export function Navbar({ isLoggedIn, manualUrl }: NavbarProps) {
+    const isExternal = manualUrl && manualUrl.startsWith("http");
+
     return (
         <nav className="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,9 +28,21 @@ export function Navbar({ isLoggedIn }: NavbarProps) {
                     </Link>
 
                     <div className="hidden md:flex items-center gap-8">
-                        <Link href="/manual" className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">
-                            คู่มือการใช้งาน
-                        </Link>
+                        {isExternal ? (
+                            <a
+                                href={manualUrl!}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors"
+                            >
+                                คู่มือการใช้งาน
+                            </a>
+                        ) : (
+                            <Link href={manualUrl || "/manual"} className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors">
+                                คู่มือการใช้งาน
+                            </Link>
+                        )}
+
                         {isLoggedIn ? (
                             <Link href="/dashboard">
                                 <Button className="bg-[#1a237e] hover:bg-[#151b60] text-sm font-bold px-8 h-10 rounded-full shadow-lg shadow-indigo-100 transition-all">ไปยัง Dashboard</Button>
@@ -45,9 +60,20 @@ export function Navbar({ isLoggedIn }: NavbarProps) {
                     </div>
 
                     <div className="md:hidden flex items-center gap-4">
-                        <Link href="/manual" className="text-xs font-bold text-slate-600">
-                            คู่มือ
-                        </Link>
+                        {isExternal ? (
+                            <a
+                                href={manualUrl!}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs font-bold text-slate-600"
+                            >
+                                คู่มือ
+                            </a>
+                        ) : (
+                            <Link href={manualUrl || "/manual"} className="text-xs font-bold text-slate-600">
+                                คู่มือ
+                            </Link>
+                        )}
                         <Link href="/login">
                             <Button className="bg-[#1a237e] h-10 px-6 rounded-full font-bold text-xs">เริ่มต้น</Button>
                         </Link>

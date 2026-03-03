@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { LayoutList, LayoutGrid, Calendar, MapPin, Users, ChevronRight, Clock, Filter } from "lucide-react";
+import { LayoutList, LayoutGrid, Calendar, MapPin, Users, ChevronRight, Clock, Filter, ChevronLeft } from "lucide-react";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
 import Link from "next/link";
@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import { useMemo } from "react";
+
+const PAGE_SIZE = 10;
 
 const statusConfig: Record<string, { label: string; className: string; dotClass: string; cardBorder: string }> = {
     Open: {
@@ -44,6 +46,7 @@ interface ActivitiesViewProps {
 export function ActivitiesView({ activities, registeredActivityIds, canRegister, session }: ActivitiesViewProps) {
     const [view, setView] = useState<"list" | "grid">("list");
     const [filter, setFilter] = useState<string>("all");
+    const [page, setPage] = useState(1);
     const registeredSet = new Set(registeredActivityIds);
 
     const filteredActivities = useMemo(() => {
@@ -57,6 +60,19 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
         });
     }, [activities, filter]);
 
+    const totalPages = Math.max(1, Math.ceil(filteredActivities.length / PAGE_SIZE));
+
+    // Reset to page 1 when filter changes
+    const handleFilterChange = (val: string) => {
+        setFilter(val);
+        setPage(1);
+    };
+
+    const paginatedActivities = useMemo(() => {
+        const start = (page - 1) * PAGE_SIZE;
+        return filteredActivities.slice(start, start + PAGE_SIZE);
+    }, [filteredActivities, page]);
+
     return (
         <div className="space-y-4">
             {/* Filters and View Toggle */}
@@ -69,7 +85,7 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
                     <div className="relative group flex-1 sm:flex-none">
                         <select
                             value={filter}
-                            onChange={(e) => setFilter(e.target.value)}
+                            onChange={(e) => handleFilterChange(e.target.value)}
                             className="w-full sm:w-48 h-10 pl-10 pr-4 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer shadow-sm hover:border-slate-300"
                         >
                             <option value="all">ทั้งหมด</option>
@@ -122,9 +138,9 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
                     </div>
 
                     <div className="divide-y divide-slate-100">
-                        {filteredActivities.length === 0 && <EmptyState />}
+                        {paginatedActivities.length === 0 && <EmptyState />}
 
-                        {filteredActivities.map((activity) => {
+                        {paginatedActivities.map((activity) => {
                             const isRegistered = registeredSet.has(activity._id);
                             const isFull = activity.status === "Full";
                             const progress = Math.min(((activity.currentRegistrations || 0) / (activity.quota || 1)) * 100, 100);
@@ -175,7 +191,7 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
                                         )}
                                     </div>
 
-                                    {/* Seats — compact */}
+                                    {/* Seats */}
                                     <div className="flex flex-col gap-1.5">
                                         <div className="flex items-center gap-1.5">
                                             <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -213,13 +229,13 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
             {/* ---- GRID VIEW ---- */}
             {view === "grid" && (
                 <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredActivities.length === 0 && (
+                    {paginatedActivities.length === 0 && (
                         <div className="col-span-full">
                             <EmptyState />
                         </div>
                     )}
 
-                    {filteredActivities.map((activity) => {
+                    {paginatedActivities.map((activity) => {
                         const isRegistered = registeredSet.has(activity._id);
                         const isFull = activity.status === "Full";
                         const progress = Math.min(((activity.currentRegistrations || 0) / (activity.quota || 1)) * 100, 100);
@@ -241,8 +257,6 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
                                             <Calendar className="w-8 h-8 opacity-20" />
                                         </div>
                                     )}
-
-                                    {/* Overlay Badges */}
                                     <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                                         <span className={`inline-flex items-center gap-1.5 text-[9px] font-bold px-2 py-1 rounded-full border shadow-sm backdrop-blur-md ${st.className}`}>
                                             <span className={`w-1 h-1 rounded-full ${st.dotClass}`} /> {st.label}
@@ -256,11 +270,9 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
                                 </div>
 
                                 <CardContent className="p-5 flex flex-col h-full space-y-3">
-                                    {/* Seats progress above title */}
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <div className="flex -space-x-2">
-                                                {/* Mini avatar group placeholder or just seat info */}
                                                 <div className="w-5 h-5 rounded-full bg-slate-100 border border-white flex items-center justify-center text-[8px] font-bold text-slate-400">
                                                     <Users className="w-2.5 h-2.5" />
                                                 </div>
@@ -275,14 +287,12 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
                                         </div>
                                     </div>
 
-                                    {/* Title */}
                                     <Link href={`/activities/${activity._id}`} className="font-bold text-slate-900 text-[15px] leading-snug line-clamp-2 group-hover:text-[#1a237e] transition-colors">
                                         {activity.title}
                                     </Link>
 
                                     <p className="text-xs text-slate-400 leading-relaxed line-clamp-2">{activity.description}</p>
 
-                                    {/* Meta */}
                                     <div className="space-y-2 pt-1">
                                         <div className="flex items-center gap-2 text-xs text-slate-600">
                                             <Calendar className="w-3.5 h-3.5 text-blue-500 shrink-0" />
@@ -304,7 +314,6 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
                                         </div>
                                     </div>
 
-                                    {/* Actions */}
                                     <div className="pt-2 mt-auto flex gap-2">
                                         <Button variant="outline" className="flex-1 h-9 rounded-lg text-xs font-bold" asChild>
                                             <Link href={`/activities/${activity._id}`}>รายละเอียด</Link>
@@ -319,6 +328,62 @@ export function ActivitiesView({ activities, registeredActivityIds, canRegister,
                             </Card>
                         );
                     })}
+                </div>
+            )}
+
+            {/* ---- PAGINATION ---- */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-2">
+                    <p className="text-xs font-bold text-slate-400">
+                        หน้า <span className="text-slate-700">{page}</span> จาก <span className="text-slate-700">{totalPages}</span>
+                        <span className="ml-2 text-slate-300">({filteredActivities.length} รายการ)</span>
+                    </p>
+
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                            className="w-9 h-9 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                            .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                            .reduce<(number | "...")[]>((acc, p, idx, arr) => {
+                                if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
+                                acc.push(p);
+                                return acc;
+                            }, [])
+                            .map((p, idx) =>
+                                p === "..." ? (
+                                    <span key={`ellipsis-${idx}`} className="w-9 h-9 flex items-center justify-center text-slate-400 text-xs font-bold">
+                                        ...
+                                    </span>
+                                ) : (
+                                    <button
+                                        key={p}
+                                        onClick={() => setPage(p as number)}
+                                        className={cn(
+                                            "w-9 h-9 rounded-xl text-xs font-black transition-all shadow-sm border",
+                                            page === p
+                                                ? "bg-[#1a237e] text-white border-[#1a237e] shadow-indigo-200"
+                                                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                                        )}
+                                    >
+                                        {p}
+                                    </button>
+                                )
+                            )}
+
+                        <button
+                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={page === totalPages}
+                            className="w-9 h-9 rounded-xl border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:border-slate-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-sm"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

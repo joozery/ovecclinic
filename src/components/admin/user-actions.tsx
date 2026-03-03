@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, Shield, Loader2, Trash2, AlertTriangle, UserPen } from "lucide-react";
+import { MoreHorizontal, Shield, Loader2, Trash2, AlertTriangle, UserPen, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
@@ -29,6 +29,7 @@ import { updateUserRole, deleteUser } from "@/actions/user";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { UserEditForm } from "./user-edit-form";
+import { UserPasswordForm } from "./user-password-form";
 
 interface UserActionsProps {
     user: {
@@ -47,6 +48,7 @@ export function UserActions({ user, currentUserRole }: UserActionsProps) {
     const [isPending, setIsPending] = useState(false);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showEditDialog, setShowEditDialog] = useState(false);
+    const [showPasswordDialog, setShowPasswordDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
 
     const canEdit = currentUserRole === 'super_admin' || (currentUserRole === 'admin' && user.role !== 'super_admin' && user.role !== 'admin');
@@ -141,6 +143,17 @@ export function UserActions({ user, currentUserRole }: UserActionsProps) {
 
                     <DropdownMenuSeparator className="bg-slate-100 my-1" />
 
+                    {/* Change Password */}
+                    <DropdownMenuItem
+                        className="rounded-lg text-sm font-bold text-slate-700 cursor-pointer"
+                        onSelect={() => setShowPasswordDialog(true)}
+                    >
+                        <KeyRound className="mr-2 h-4 w-4 text-orange-500" />
+                        เปลี่ยนรหัสผ่าน
+                    </DropdownMenuItem>
+
+                    <DropdownMenuSeparator className="bg-slate-100 my-1" />
+
                     {/* Delete */}
                     <DropdownMenuItem
                         className="rounded-lg text-sm font-bold text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
@@ -171,6 +184,29 @@ export function UserActions({ user, currentUserRole }: UserActionsProps) {
 
                     <div className="p-8 max-h-[70vh] overflow-y-auto">
                         <UserEditForm user={user} onSuccess={() => setShowEditDialog(false)} />
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Change Password Dialog */}
+            <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+                <DialogContent className="sm:max-w-md rounded-3xl border-none shadow-2xl p-0 overflow-hidden">
+                    <DialogHeader className="p-8 pb-4 bg-gradient-to-br from-orange-500 to-red-600 text-white">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+                                <KeyRound className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-xl font-black text-white">เปลี่ยนรหัสผ่าน</DialogTitle>
+                                <DialogDescription className="text-orange-100/70 text-sm font-medium">
+                                    ตั้งรหัสผ่านใหม่ให้กับ <span className="text-white font-bold">{user.name}</span>
+                                </DialogDescription>
+                            </div>
+                        </div>
+                    </DialogHeader>
+
+                    <div className="p-8">
+                        <UserPasswordForm user={user} onSuccess={() => setShowPasswordDialog(false)} />
                     </div>
                 </DialogContent>
             </Dialog>

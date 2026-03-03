@@ -27,6 +27,7 @@ import { RegisterButton } from "@/components/activity/register-button";
 import { ActivityActionButtons } from "@/components/activity/activity-action-buttons";
 import { Navbar } from "@/components/home/navbar";
 import { Footer } from "@/components/home/footer";
+import { getSiteSetting } from "@/actions/site-settings";
 
 export const dynamic = "force-dynamic";
 
@@ -56,9 +57,11 @@ export default async function ActivityDetailPage({
     const progress = Math.min((current / quota) * 100, 100);
     const isFull = current >= quota;
 
+    const [manualUrl] = await Promise.all([getSiteSetting("manual_url")]);
+
     return (
         <div className="min-h-screen bg-white">
-            <Navbar isLoggedIn={isLoggedIn} />
+            <Navbar isLoggedIn={isLoggedIn} manualUrl={manualUrl} />
 
             <main className="bg-slate-50/50 pb-20 pt-16">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

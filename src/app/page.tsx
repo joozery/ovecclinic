@@ -6,14 +6,16 @@ import { LatestActivities } from "@/components/home/latest-activities";
 import { BannerSection } from "@/components/home/banner-section";
 import { CalendarSection } from "@/components/home/calendar-section";
 import { Footer } from "@/components/home/footer";
+import { getSiteSetting } from "@/actions/site-settings";
 
 export default async function Home() {
   const session = await auth();
   const isLoggedIn = !!session;
+  const manualUrl = await getSiteSetting("manual_url");
 
   return (
     <div className="min-h-screen bg-white">
-      <Navbar isLoggedIn={isLoggedIn} />
+      <Navbar isLoggedIn={isLoggedIn} manualUrl={manualUrl} />
       <main>
         <Hero />
         <Stats />

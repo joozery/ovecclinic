@@ -1,15 +1,17 @@
 import { Navbar } from "@/components/home/navbar";
 import { Footer } from "@/components/home/footer";
 import { auth } from "@/auth";
+import { getSiteSetting } from "@/actions/site-settings";
 import { Shield, Lock, Eye, FileText, UserCheck, Smartphone } from "lucide-react";
 
 export default async function PrivacyPage() {
     const session = await auth();
     const isLoggedIn = !!session;
+    const manualUrl = await getSiteSetting("manual_url");
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
-            <Navbar isLoggedIn={isLoggedIn} />
+            <Navbar isLoggedIn={isLoggedIn} manualUrl={manualUrl} />
 
             <main className="flex-1">
                 {/* Header Section */}

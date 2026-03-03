@@ -428,3 +428,31 @@ export async function bulkDeleteUsers(userIds: string[]) {
     revalidatePath("/admin/users");
     return { success: true };
 }
+
+export async function resetUserPasswordByAdmin(userId: string, formData: FormData) {
+    const session = await auth();
+    if (!session || (session.user.role !== 'admin' && session.user.role !== 'super_admin')) {
+        throw new Error("Unauthorized");
+    }
+
+    const password = formData.get("password") as string;
+    if (!password || password.length < 6) {
+        return { error: "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร" };
+    }
+
+    await dbConnect();
+    const targetUser = await User.findById(userId);
+    if (!targetUser) return { error: "ไม่พบผู้ใช้งาน" };
+
+    if ((targetUser.role === 'super_admin' || targetUser.role === 'admin') && session.user.role !== 'super_admin') {
+        return { error: "เฉพาะ Super Admin เท่านั้นที่สามารถเปลี่ยนรหัสผ่านของผู้ดูแลระบบด้วยกันได้" };
+    }
+
+    const bcrypt = await import("bcryptjs");
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    await User.findByIdAndUpdate(userId, { password: hashedPassword });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+}

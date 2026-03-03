@@ -13,6 +13,7 @@ import { SearchInput } from "@/components/search-input";
 import { Navbar } from "@/components/home/navbar";
 import { Footer } from "@/components/home/footer";
 import { auth } from "@/auth";
+import { getSiteSetting } from "@/actions/site-settings";
 
 export default async function PublicActivitiesPage({
     searchParams,
@@ -25,10 +26,11 @@ export default async function PublicActivitiesPage({
 
     const session = await auth();
     const isLoggedIn = !!session;
+    const manualUrl = await getSiteSetting("manual_url");
 
     return (
         <div className="min-h-screen bg-white flex flex-col">
-            <Navbar isLoggedIn={isLoggedIn} />
+            <Navbar isLoggedIn={isLoggedIn} manualUrl={manualUrl} />
             <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
                 <div className="max-w-4xl mx-auto mb-16 text-center">
                     <h1 className="text-4xl font-bold mb-4">กิจกรรมการนิเทศและอบรมที่เปิดรับสมัคร</h1>

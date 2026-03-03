@@ -192,7 +192,7 @@ export default async function DashboardPage({
                     </CardHeader>
                     <CardContent className="p-8 pt-0">
                         <p className="text-[13px] text-slate-500 mb-8 font-medium leading-relaxed">
-                            ยกระดับการจัดการเรียนรู้ ผ่านกระบวนการนิเทศที่สร้างสรรค์และนำไปใช้ได้จริง ร่วมแลกเปลี่ยนประสบการณ์ มุมมอง และรับการชี้แนะเพื่อเสริมสร้างความมั่นใจในการสอน
+                            ยกระดับการจัดการเรียนรู้ผ่านกระบวนการนิเทศที่สร้างสรรค์และนำไปใช้ได้จริง
                         </p>
                         <Link href="/activities">
                             <button className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95">

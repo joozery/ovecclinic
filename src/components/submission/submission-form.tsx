@@ -160,7 +160,7 @@ export function SubmissionForm({ registrationId, initialData }: SubmissionFormPr
                                 <UploadCloud className="w-8 h-8" />
                             </div>
                             <p className="text-sm font-bold text-slate-800 mb-1">ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</p>
-                            <p className="text-[11px] font-medium text-slate-400">รองรับไฟล์รูปภาพ, PDF, Word, Excel, PowerPoint (สูงสุด 10MB)</p>
+                            <p className="text-[11px] font-medium text-slate-400">รองรับไฟล์รูปภาพ, PDF, Word, Excel, PowerPoint (สูงสุด 50MB)</p>
                         </div>
                     )}
 
